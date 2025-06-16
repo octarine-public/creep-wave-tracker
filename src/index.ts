@@ -1,7 +1,13 @@
+import "./translations"
+
 import {
 	Creep,
+	DOTAGameState,
+	DOTAGameUIState,
 	Entity,
 	EventsSDK,
+	GameRules,
+	GameState,
 	Siege,
 	Vector3
 } from "github.com/octarine-public/wrapper/index"
@@ -24,8 +30,18 @@ new (class CreepWaveTracker {
 		EventsSDK.on("EntityDestroyed", this.EntityDestroyed.bind(this))
 	}
 
+	private get gameState() {
+		return GameRules?.GameState ?? DOTAGameState.DOTA_GAMERULES_STATE_INIT
+	}
+	private get isInProgress() {
+		return this.gameState === DOTAGameState.DOTA_GAMERULES_STATE_GAME_IN_PROGRESS
+	}
+
 	private Draw() {
-		if (!this.menu.State.value) {
+		if (GameState.UIState !== DOTAGameUIState.DOTA_GAME_UI_DOTA_INGAME) {
+			return
+		}
+		if (!this.isInProgress || !this.menu.State.value) {
 			return
 		}
 		for (let i = this.groups.length - 1; i > -1; i--) {
@@ -33,7 +49,7 @@ new (class CreepWaveTracker {
 		}
 	}
 	protected PostDataUpdate(delta: number) {
-		if (delta === 0) {
+		if (!this.isInProgress || delta === 0) {
 			return
 		}
 		this.groups.clear()

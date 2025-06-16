@@ -9,12 +9,12 @@ import {
 	Vector3
 } from "github.com/octarine-public/wrapper/index"
 
-import { MenuManager } from "./menu"
+import { MenuManager, ScriptsFiles } from "./menu"
 
 export class GUI {
-	private static readonly basePath = "github.com/octarine-public/creep-wave-tracker"
-	private static readonly filesPath = this.basePath + "/scripts_files"
-	private static readonly iconArmor = this.filesPath + "/icons/shield-check.svg"
+	private static readonly iconArmor = ScriptsFiles + "/icons/shield-check.svg"
+	private static readonly bgBad = ScriptsFiles + "/images/gradient_bad.png"
+	private static readonly bgGood = ScriptsFiles + "/images/gradient_good.png"
 
 	public DrawMinimap(
 		menu: MenuManager,
@@ -112,8 +112,10 @@ export class GUI {
 		position.x -= position.Width / 8
 		position.y -= position.Height / 8
 
-		const color = team === Team.Radiant ? Color.Green : Color.Red
-		RendererSDK.FilledCircle(position.pos1, position.Size, Color.Black.SetA(180))
+		const color = team === Team.Radiant ? Color.Green : Color.Red,
+			image = team === Team.Radiant ? GUI.bgGood : GUI.bgBad
+
+		RendererSDK.Image(image, position.pos1, 0, position.Size, Color.White.SetA(200))
 		RendererSDK.OutlinedCircle(position.pos1, position.Size, color, 6)
 	}
 	private getEmojiName(team: Team) {

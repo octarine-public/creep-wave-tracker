@@ -1,3 +1,15 @@
 {
-	"State": "Состояние"
+	"State": "Состояние",
+	"Size": "Размер",
+	"Icon": "Иконка",
+	"Text": "Текст",
+	"Color": "Цвет",
+	"Type": "Тип",
+	"Only text": "Только текст",
+	"Settings world": "Настройки мира",
+	"Settings minimap": "Настройки миникарты",
+	"Creep waves tracker": "Отслеживание волн крипов",
+	"Icon/text size": "Размер иконки/текста",
+	"Siege color": "Цвет катапульты",
+	"Siege icon color": "Цвет иконки катапульты"
 }
