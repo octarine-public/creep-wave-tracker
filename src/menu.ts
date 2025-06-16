@@ -2,10 +2,12 @@ import { Color, ImageData, Menu } from "github.com/octarine-public/wrapper/index
 
 class SettingsWorld {
 	public readonly Size: Menu.Slider
+	public readonly OnlyText: Menu.Toggle
 	private readonly tree: Menu.Node
 
 	constructor(node: Menu.Node) {
 		this.tree = node.AddNode("Settings world")
+		this.OnlyText = this.tree.AddToggle("Only text")
 		this.Size = this.tree.AddSlider("Size", 0, 0, 50)
 	}
 }
@@ -20,7 +22,7 @@ class SettingsMinimap {
 
 	constructor(node: Menu.Node) {
 		this.tree = node.AddNode("Settings minimap")
-		this.Type = this.tree.AddDropdown("Type", ["Icon", "Text"])
+		this.Type = this.tree.AddDropdown("Type", ["Text", "Icon"])
 		this.Size = this.tree.AddSlider("Size", 0, 0, 100, 1, "Icon/text size")
 		this.Color = this.tree.AddColorPicker("Color", Color.Aqua, "Icon/text color")
 		this.SiegeColor = this.tree.AddColorPicker(
