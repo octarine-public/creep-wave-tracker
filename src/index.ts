@@ -8,8 +8,7 @@ import {
 	EventsSDK,
 	GameRules,
 	GameState,
-	Siege,
-	Vector3
+	Siege
 } from "github.com/octarine-public/wrapper/index"
 
 import { MenuManager } from "./menu"
@@ -72,7 +71,6 @@ new (class CreepWaveTracker {
 			}
 			group.Creeps.push(creep)
 			group.HasSiege = creep instanceof Siege
-			group.Position.CopyFrom(Vector3.GetCenter(group.Creeps.map(x => x.Position)))
 		}
 	}
 	protected EntityCreated(entity: Entity) {

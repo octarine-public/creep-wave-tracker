@@ -4,22 +4,21 @@ import { GUI } from "./gui"
 import { MenuManager } from "./menu"
 
 export class CreepGroupModel {
-	public readonly Creeps: Creep[] = []
-	public readonly Position = new Vector3().Invalidate()
-
 	public HasSiege: boolean = false
 	public IsVisible: boolean = false
-
+	public readonly Creeps: Creep[] = []
 	private readonly gui = new GUI()
 
 	constructor(public readonly FirstCreep: Creep) {
 		this.HasSiege = FirstCreep instanceof Siege
 		this.IsVisible = FirstCreep.IsVisible
-		this.Position.CopyFrom(FirstCreep.Position)
 		this.Creeps.push(FirstCreep)
 	}
+	public get Position() {
+		return Vector3.GetCenter(this.Creeps.map(x => x.Position))
+	}
 	public Draw(menu: MenuManager) {
-		if (this.IsVisible || !this.Position.IsValid) {
+		if (this.IsVisible) {
 			return
 		}
 		this.gui.DrawMinimap(menu, this.Position, this.Creeps.length, this.HasSiege)
