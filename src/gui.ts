@@ -54,7 +54,7 @@ export class GUI {
 	}
 	protected GetRectangle(origin: Vector3, menu: MenuManager): Nullable<Rectangle> {
 		const w2s = RendererSDK.WorldToScreen(origin)
-		if (w2s === undefined) {
+		if (w2s === undefined || this.сontainsHUD(w2s)) {
 			return
 		}
 		const size = menu.World.Size.value + 32
@@ -165,5 +165,13 @@ export class GUI {
 			return
 		}
 		MinimapSDK.DrawIcon("shield", position, size / 1.5, siegeColor)
+	}
+	private сontainsHUD(position: Vector2): boolean {
+		return (
+			GUIInfo.ContainsShop(position) ||
+			GUIInfo.ContainsMiniMap(position) ||
+			GUIInfo.ContainsLowerHUD(position) ||
+			GUIInfo.ContainsScoreboard(position)
+		)
 	}
 }
