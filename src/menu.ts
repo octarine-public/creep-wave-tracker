@@ -45,7 +45,7 @@ export class MenuManager {
 	public readonly Minimap: SettingsMinimap
 
 	private readonly icon = ImageData.Icons.icon_svg_creep
-	private readonly tree = Menu.AddEntry("Visual")
+	private readonly tree = Menu.AddEntryDeep(["Visual", "Maphack"])
 	private readonly node = this.tree.AddNode("Creep waves tracker", this.icon)
 
 	constructor() {
