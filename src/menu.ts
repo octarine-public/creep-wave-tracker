@@ -1,4 +1,3 @@
-import { Color, ImageData, Menu } from "github.com/octarine-public/wrapper/index"
 
 const basePath = "github.com/octarine-public/creep-wave-tracker"
 export const ScriptsFiles = basePath + "/scripts_files"

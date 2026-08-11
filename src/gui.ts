@@ -1,13 +1,3 @@
-import {
-	Color,
-	GUIInfo,
-	MinimapSDK,
-	Rectangle,
-	RendererSDK,
-	Team,
-	Vector2,
-	Vector3
-} from "github.com/octarine-public/wrapper/index"
 
 import { MenuManager, ScriptsFiles } from "./menu"
 

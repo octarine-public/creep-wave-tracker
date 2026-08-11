@@ -1,4 +1,3 @@
-import { Creep, Siege, Vector3 } from "github.com/octarine-public/wrapper/index"
 
 import { GUI } from "./gui"
 import { MenuManager } from "./menu"

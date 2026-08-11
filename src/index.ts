@@ -1,16 +1,5 @@
 import "./translations"
 
-import {
-	Creep,
-	DOTAGameState,
-	DOTAGameUIState,
-	Entity,
-	EventsSDK,
-	GameRules,
-	GameState,
-	Siege
-} from "github.com/octarine-public/wrapper/index"
-
 import { MenuManager } from "./menu"
 import { CreepGroupModel } from "./model"
 
@@ -30,7 +19,7 @@ new (class CreepWaveTracker {
 	}
 
 	private get gameState() {
-		return GameRules?.GameState ?? DOTAGameState.DOTA_GAMERULES_STATE_INIT
+		return Dota2SDK.GameRules?.GameState ?? DOTAGameState.DOTA_GAMERULES_STATE_INIT
 	}
 	private get isInProgress() {
 		return this.gameState === DOTAGameState.DOTA_GAMERULES_STATE_GAME_IN_PROGRESS
