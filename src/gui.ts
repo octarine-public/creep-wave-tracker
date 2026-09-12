@@ -1,4 +1,4 @@
-
+import { canvas } from "../render"
 import { MenuManager, ScriptsFiles } from "./menu"
 
 export class GUI {
@@ -64,36 +64,28 @@ export class GUI {
 		position.Height /= 2
 		position.AddX(position.Width / 2)
 		position.AddY(position.Width)
-		RendererSDK.Image(GUI.iconArmor, position.pos1, -1, position.Size, Color.Aqua)
+		canvas.Image(GUI.iconArmor, position.pos1, position.Size, { color: Color.Aqua })
 	}
 	private countCreeps(rec: Rectangle, count: number, onlyText: boolean = false) {
 		if (onlyText) {
-			RendererSDK.TextByFlags(`${count}`, rec, Color.White)
+			canvas.TextIn(`${count}`, rec, {
+				color: Color.White,
+				size: rec.Height / 1.2 + 4
+			})
 			return
 		}
 		const position = rec.Clone()
 		position.SubtractY(position.Height / 2)
-		RendererSDK.TextByFlags(`${count}`, position, Color.White, 2)
+		canvas.TextIn(`${count}`, position, {
+			color: Color.White,
+			size: position.Height / 2 + 4
+		})
 	}
 	private emoji(rec: Rectangle, team: Team) {
 		const position = rec.Clone(),
 			frameIdx = (hrtime() / 100) | 0,
-			path = `panorama/images/emoticons/${this.getEmojiName(team)}_png.vtex_c`,
-			totalSize = RendererSDK.GetImageSize(path),
-			pathSizeY = totalSize.y,
-			framesCount = totalSize.x / pathSizeY
-		RendererSDK.Image(
-			path,
-			position.pos1,
-			undefined,
-			position.Size,
-			undefined,
-			undefined,
-			undefined,
-			undefined,
-			new Vector2(pathSizeY * (frameIdx % framesCount), 0),
-			new Vector2(pathSizeY, pathSizeY)
-		)
+			path = `panorama/images/emoticons/${this.getEmojiName(team)}_png.vtex_c`
+		canvas.Sprite(path, position.pos1, position.Size, frameIdx)
 	}
 	private background(rec: Rectangle, team: Team) {
 		const position = rec.Clone()
@@ -105,8 +97,15 @@ export class GUI {
 		const color = team === Team.Radiant ? Color.Green : Color.Red,
 			image = team === Team.Radiant ? GUI.bgGood : GUI.bgBad
 
-		RendererSDK.Image(image, position.pos1, 0, position.Size, Color.White.SetA(200))
-		RendererSDK.OutlinedCircle(position.pos1, position.Size, color, 6)
+		canvas.Image(image, position.pos1, position.Size, {
+			color: Color.White.SetA(200),
+			circle: true
+		})
+		canvas.Circle(position.pos1, position.Size, {
+			color: Color.fromUint32(0),
+			borderColor: color,
+			borderWidth: 6
+		})
 	}
 	private getEmojiName(team: Team) {
 		return team === Team.Radiant ? "creepdance" : "creep_complain"
