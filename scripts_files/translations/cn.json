@@ -1,1 +1,15 @@
-{}
+{
+	"State": "启用",
+	"Size": "大小",
+	"Icon": "图标",
+	"Text": "文字",
+	"Color": "颜色",
+	"Type": "类型",
+	"Only text": "仅文字",
+	"Settings world": "世界设置",
+	"Settings minimap": "小地图设置",
+	"Creep waves tracker": "兵线追踪",
+	"Icon/text size": "图标/文字大小",
+	"Siege color": "攻城车颜色",
+	"Siege icon color": "攻城车图标颜色"
+}
