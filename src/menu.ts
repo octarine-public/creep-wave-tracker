@@ -1,4 +1,3 @@
-
 const basePath = "github.com/octarine-public/creep-wave-tracker"
 export const ScriptsFiles = basePath + "/scripts_files"
 
