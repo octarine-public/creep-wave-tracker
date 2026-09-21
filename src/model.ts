@@ -2,13 +2,15 @@ import { GUI } from "./gui"
 import { MenuManager } from "./menu"
 
 /**
- * The art of a creep: the game's portrait of its kind. A super or a mega creep wears the plain
- * one's, and a flagbearer the melee creep's it marches with, since neither has a portrait of
- * its own.
+ * The art a wave wears, cut for its faction: the game keeps a portrait of the lane creep only
+ * for the Radiant, so the chip wears the one it draws for the creep of either side as a hero,
+ * and the siege creep of the default creep set where the wave carries one.
  */
-function ArtOf(creep: Creep) {
-	const name = creep.Name.replace(/_upgraded(_mega)?$/, "")
-	return ImageData.GetCreepTexture(name.replace("_flagbearer", "_melee"))
+function ArtOf(team: Team, hasSiege: boolean) {
+	const side = team === Team.Dire ? "dire" : "radiant"
+	return hasSiege
+		? `${PathData.ImagePath}/econ/creeps/lane_creeps/creep_dc_${side}/creep_dc_${side}_siege_png.vtex_c`
+		: `${PathData.HeroImagePath}/npc_dota_hero_creep_${side}_png.vtex_c`
 }
 
 /** A wave: the enemy creeps marching together down one lane. */
@@ -16,8 +18,8 @@ export class CreepGroupModel {
 	/** Whether any creep of the wave is in sight: a wave in sight needs no mark of ours. */
 	public IsVisible = false
 	public readonly Creeps: Creep[] = []
-	/** The siege creep the wave carries, whose art the chip wears over the others'. */
-	private siege: Nullable<Siege>
+	/** Whether the wave carries a siege creep, whose art the chip wears over the others'. */
+	private siege = false
 
 	constructor(public readonly FirstCreep: Creep) {
 		this.Add(FirstCreep)
@@ -32,7 +34,7 @@ export class CreepGroupModel {
 		return this.Creeps.length
 	}
 	public get HasSiege() {
-		return this.siege !== undefined
+		return this.siege
 	}
 	/** The middle of the wave. */
 	public get Position() {
@@ -42,9 +44,9 @@ export class CreepGroupModel {
 		}
 		return center.DivideScalarForThis(this.Creeps.length)
 	}
-	/** The art the chip wears: the siege creep's where the wave has one, the first creep's otherwise. */
+	/** The art the chip wears: the siege creep where the wave has one, the faction's creep otherwise. */
 	public get Glyph(): string {
-		return ArtOf(this.siege ?? this.FirstCreep)
+		return ArtOf(this.Team, this.HasSiege)
 	}
 	/** Takes a creep into the wave, and what it brings with it: sight of the wave, or a siege creep. */
 	public Add(creep: Creep) {
@@ -53,7 +55,7 @@ export class CreepGroupModel {
 			this.IsVisible = true
 		}
 		if (creep instanceof Siege) {
-			this.siege ??= creep
+			this.siege = true
 		}
 	}
 	/** Whether `creep` marches with this wave: the same lane, within reach of the first creep. */
