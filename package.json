@@ -20,6 +20,7 @@
 		"typescript": "^5.6.3"
 	},
 	"scripts": {
+		"test": "node --test tests/*.test.cjs",
 		"check-types": "npx tsc",
 		"check-types-watch": "npx tsc --watch",
 		"upgrade-pack": "yarn upgrade-interactive --latest",

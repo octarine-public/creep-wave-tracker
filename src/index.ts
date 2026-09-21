@@ -10,8 +10,8 @@ const WAVE_REACH = 600
 new (class CCreepWaveTracker {
 	private readonly menu!: MenuManager
 	private readonly gui = new GUI()
-	/** Every enemy lane creep there is, in sight or not. */
-	private readonly creeps: Creep[] = []
+	/** The SDK's live creep registry, including creeps created before this tracker loaded. */
+	private readonly creeps = EntityManager.GetEntitiesByClass(Creep)
 	/** The waves the creeps stood in on the last update. */
 	private readonly groups: CreepGroupModel[] = []
 
@@ -23,9 +23,6 @@ new (class CCreepWaveTracker {
 		EventsSDK.on("Draw", this.Draw.bind(this))
 		EventsSDK.on("GameEnded", this.GameEnded.bind(this))
 		EventsSDK.on("PostDataUpdate", this.PostDataUpdate.bind(this))
-
-		EventsSDK.on("EntityCreated", this.EntityCreated.bind(this))
-		EventsSDK.on("EntityDestroyed", this.EntityDestroyed.bind(this))
 	}
 	private get isUIGame() {
 		return GameState.UIState === DOTAGameUIState.DOTA_GAME_UI_DOTA_INGAME
@@ -41,7 +38,6 @@ new (class CCreepWaveTracker {
 	}
 	protected GameEnded() {
 		this.groups.clear()
-		this.creeps.clear()
 	}
 	protected Draw() {
 		if (!this.shouldDraw) {
@@ -55,21 +51,11 @@ new (class CCreepWaveTracker {
 			this.groups[i].Draw(this.gui, this.menu, `creep_wave_${i}`)
 		}
 	}
-	protected PostDataUpdate(dt: number) {
-		if (dt === 0 || this.isPostGame) {
+	protected PostDataUpdate() {
+		if (this.isPostGame) {
 			return
 		}
 		this.regroup()
-	}
-	protected EntityCreated(entity: Entity) {
-		if (this.isLaneCreep(entity)) {
-			this.creeps.push(entity)
-		}
-	}
-	protected EntityDestroyed(entity: Entity) {
-		if (this.isLaneCreep(entity)) {
-			this.creeps.remove(entity)
-		}
 	}
 	/**
 	 * Sorts the creeps into waves again: every living creep joins the first wave of its lane it
@@ -79,7 +65,13 @@ new (class CCreepWaveTracker {
 		this.groups.clear()
 		for (let i = this.creeps.length - 1; i > -1; i--) {
 			const creep = this.creeps[i]
-			if (!creep.IsAlive || creep.PredictedIsWaitingToSpawn) {
+			if (
+				!creep.IsValid ||
+				!creep.IsLaneCreep ||
+				!creep.IsEnemy() ||
+				!creep.IsAlive ||
+				creep.PredictedIsWaitingToSpawn
+			) {
 				continue
 			}
 			const group = this.groups.find(x => x.Holds(creep, WAVE_REACH))
@@ -89,8 +81,5 @@ new (class CCreepWaveTracker {
 				group.Add(creep)
 			}
 		}
-	}
-	private isLaneCreep(entity: Entity): entity is Creep {
-		return entity instanceof Creep && entity.IsLaneCreep && entity.IsEnemy()
 	}
 })(true)
