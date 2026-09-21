@@ -7,24 +7,24 @@ import { MenuManager, MinimapStyle } from "./menu"
  * in the colour of the wave's faction, the art of its creep cut round and the count of creeps in
  * it. The slider scales the whole thing about {@link SIZE_BASE}.
  */
-const HEIGHT = 26
+const HEIGHT = 34
 /**
  * The corner, in dp: the menu's own card radius, which carries the theme's radius scale with it,
  * held to a pill so a wide radius on a low chip never turns its corners inside out.
  */
 const RADIUS = Math.min(MenuSDK.HudCardRadius, HEIGHT / 2)
-const PAD = 3
+const PAD = 4
 /**
  * The room the count keeps to the rim on its side, wider than {@link PAD}: the art sits flush in
  * its disc, and a count set as close to the rim as the disc is looked jammed against it.
  */
-const PAD_TEXT = 9
-const GAP = 6
-const GLYPH = 20
-const FONT = 13
+const PAD_TEXT = 11
+const GAP = 8
+const GLYPH = 27
+const FONT = 16
 const WEIGHT = MenuSDK.HudBold
 /** The count written on its own, with no card under it: the size it is read at, in dp. */
-const TEXT_ONLY_FONT = 18
+const TEXT_ONLY_FONT = 24
 /** How deep the glass is washed in the tint over the theme's own colour, out of 255. */
 const TINT = 36
 /** How dark the outline under a count is cut, 0 to 1: enough to hold on a lit wall, not a black rim. */

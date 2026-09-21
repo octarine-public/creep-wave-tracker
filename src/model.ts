@@ -2,6 +2,12 @@ import { GUI } from "./gui"
 import { MenuManager } from "./menu"
 
 /**
+ * How far over a creep's health bar the chip stands, in world units: clear of the heroes and
+ * jungle creeps that walk the same ground, and of the marks the game hangs over a camp.
+ */
+const WORLD_LIFT = 200
+
+/**
  * The art a wave wears, cut for its faction: the game keeps a portrait of the lane creep only
  * for the Radiant, so the chip wears the one it draws for the creep of either side as a hero,
  * and the siege creep of the default creep set where the wave carries one.
@@ -69,9 +75,9 @@ export class CreepGroupModel {
 		}
 		const position = this.Position
 		gui.DrawMinimap(position, this.Count, this.HasSiege, key, menu)
-		// the chip stands over the middle of the wave, as high as a creep's health bar
+		// the chip stands over the middle of the wave, well over a creep's health bar
 		gui.DrawWorld(
-			position.AddScalarZ(this.FirstCreep.HealthBarOffset),
+			position.AddScalarZ(this.FirstCreep.HealthBarOffset + WORLD_LIFT),
 			this.Team,
 			this.Glyph,
 			this.Count,
