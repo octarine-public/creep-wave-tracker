@@ -1,166 +1,250 @@
-import { canvas } from "../render"
-import { MenuManager, ScriptsFiles } from "./menu"
+import { surface } from "../render"
+import { MenuManager, MinimapStyle } from "./menu"
+
+/**
+ * The chip a wave wears in the world, in dp at the slider's middle: the card the menu's own
+ * panels wear - its glass, its hairline rim, its frost and its halo, whatever the theme set - washed
+ * in the colour of the wave's faction, the art of its creep cut round and the count of creeps in
+ * it. The slider scales the whole thing about {@link SIZE_BASE}.
+ */
+const HEIGHT = 26
+/**
+ * The corner, in dp: the menu's own card radius, which carries the theme's radius scale with it,
+ * held to a pill so a wide radius on a low chip never turns its corners inside out.
+ */
+const RADIUS = Math.min(MenuSDK.HudCardRadius, HEIGHT / 2)
+const PAD = 3
+/**
+ * The room the count keeps to the rim on its side, wider than {@link PAD}: the art sits flush in
+ * its disc, and a count set as close to the rim as the disc is looked jammed against it.
+ */
+const PAD_TEXT = 9
+const GAP = 6
+const GLYPH = 20
+const FONT = 13
+const WEIGHT = MenuSDK.HudBold
+/** The count written on its own, with no card under it: the size it is read at, in dp. */
+const TEXT_ONLY_FONT = 18
+/** How deep the glass is washed in the tint over the theme's own colour, out of 255. */
+const TINT = 36
+/** How dark the outline under a count is cut, 0 to 1: enough to hold on a lit wall, not a black rim. */
+const OUTLINE = 0.5
+/** The slider value the chip and the mark are drawn at 1:1 on; every notch is a twelfth either way. */
+const SIZE_BASE = 4
+const SIZE_STEP = 12
+
+/** The minimap's names for a creep and for a siege creep, and the size the icon is drawn at 1:1. */
+const MINIMAP_CREEP = "creep"
+const MINIMAP_SIEGE = "siege"
+const MINIMAP_ICON_SIZE = 260
+/**
+ * The badge a count stands on over the minimap, in dp: its height, which a one-digit count keeps
+ * as its width, the room a longer count keeps to its rim, and the size it is read at.
+ */
+const BADGE = 14
+const BADGE_PAD = 4
+const BADGE_FONT = 10
+/** How dark the plate under the badge is, out of 255, and how deep the rim's colour washes it. */
+const BADGE_PLATE = 170
+const BADGE_WASH = 60
+/** How far the badge stands off the icon's centre, as a share of its height, beside an icon. */
+const BADGE_OFFSET = 0.6
+
+/** The colour a wave is known by in the world: its faction's own green and red. */
+const RadiantTint = new Color(96, 220, 120)
+const DireTint = new Color(227, 61, 61)
+
+export function TeamTint(team: Team) {
+	return team === Team.Dire ? DireTint : RadiantTint
+}
+
+/** The scale the slider at `value` draws at, 1:1 at {@link SIZE_BASE}. */
+function ScaleOf(value: number) {
+	return (value + SIZE_STEP) / (SIZE_BASE + SIZE_STEP)
+}
 
 export class GUI {
-	private static readonly iconArmor = ScriptsFiles + "/icons/shield-check.svg"
-	private static readonly bgBad = ScriptsFiles + "/images/gradient_bad.png"
-	private static readonly bgGood = ScriptsFiles + "/images/gradient_good.png"
+	/**
+	 * How many cards this frame has carved so far, over every wave. Cards carved by one and the
+	 * same shader string share a decorator instance in RmlUi, so each one on the surface has to be
+	 * handed a step of its own; the step is invisible.
+	 */
+	private static carved = 0
+	private readonly box = new Rectangle()
+	private readonly pos = new Vector2()
+	private readonly size = new Vector2()
 
-	public DrawMinimap(
-		menu: MenuManager,
-		origin: Vector3,
-		count: number = 0,
-		hasSiege: boolean
-	) {
-		const size = (menu.Minimap.Size.value + 40) * 10
-		switch (menu.Minimap.Type.SelectedID) {
-			case 0:
-				this.minimapText(menu, count, size, origin)
-				break
-			default:
-				this.minimapIcon(menu, size, hasSiege, origin)
-				break
-		}
+	/** A frame is starting: no card has been carved on the surface yet. */
+	public static BeginFrame() {
+		GUI.carved = 0
 	}
+
+	/**
+	 * The chip over a wave: the card washed in the faction's colour, the creep's art cut round and
+	 * the count, or the count on its own where the menu asks for that.
+	 */
 	public DrawWorld(
-		menu: MenuManager,
-		origin: Vector3,
-		countCreeps: number = 0,
+		anchor: Vector3,
 		team: Team,
-		hasSiege: boolean
-	) {
-		const position = this.GetRectangle(origin, menu)
-		if (position === undefined) {
-			return
-		}
-		if (menu.World.OnlyText.value) {
-			this.countCreeps(position, countCreeps)
-			return
-		}
-		this.background(position, team)
-		this.iconShield(position, hasSiege)
-		this.emoji(position, team)
-		this.countCreeps(position, countCreeps)
-	}
-	protected GetRectangle(origin: Vector3, menu: MenuManager): Nullable<Rectangle> {
-		const w2s = RendererSDK.WorldToScreen(origin)
-		if (w2s === undefined || this.сontainsHUD(w2s)) {
-			return
-		}
-		const size = menu.World.Size.value + 32
-		const vecSize = GUIInfo.ScaleVector(size, size)
-		const position = new Rectangle(w2s, w2s.Add(vecSize))
-		position.x -= position.Width / 2
-		position.y -= position.Height / 2
-		return position
-	}
-	private iconShield(rec: Rectangle, hasSiege: boolean = false) {
-		if (!hasSiege) {
-			return
-		}
-		const position = rec.Clone()
-		position.AddY(position.Height / 2)
-		position.Width /= 2
-		position.Height /= 2
-		position.AddX(position.Width / 2)
-		position.AddY(position.Width)
-		canvas.Image(GUI.iconArmor, position.pos1, position.Size, { color: Color.Aqua })
-	}
-	private countCreeps(rec: Rectangle, count: number, onlyText: boolean = false) {
-		if (onlyText) {
-			canvas.TextIn(`${count}`, rec, {
-				color: Color.White,
-				size: rec.Height / 1.2 + 4
-			})
-			return
-		}
-		const position = rec.Clone()
-		position.SubtractY(position.Height / 2)
-		canvas.TextIn(`${count}`, position, {
-			color: Color.White,
-			size: position.Height / 2 + 4
-		})
-	}
-	private emoji(rec: Rectangle, team: Team) {
-		const position = rec.Clone(),
-			frameIdx = (hrtime() / 100) | 0,
-			path = `panorama/images/emoticons/${this.getEmojiName(team)}_png.vtex_c`
-		canvas.Sprite(path, position.pos1, position.Size, frameIdx)
-	}
-	private background(rec: Rectangle, team: Team) {
-		const position = rec.Clone()
-		position.Width *= 1.3
-		position.Height *= 1.3
-		position.x -= position.Width / 8
-		position.y -= position.Height / 8
-
-		const color = team === Team.Radiant ? Color.Green : Color.Red,
-			image = team === Team.Radiant ? GUI.bgGood : GUI.bgBad
-
-		canvas.Image(image, position.pos1, position.Size, {
-			color: Color.White.SetA(200),
-			circle: true
-		})
-		canvas.Circle(position.pos1, position.Size, {
-			color: Color.fromUint32(0),
-			borderColor: color,
-			borderWidth: 6
-		})
-	}
-	private getEmojiName(team: Team) {
-		return team === Team.Radiant ? "creepdance" : "creep_complain"
-	}
-	private minimapText(
-		menu: MenuManager,
+		glyph: string,
 		count: number,
-		size: number,
-		position: Vector3,
-		hasSiege: boolean = false
+		menu: MenuManager
 	) {
-		const anyColor = menu.Minimap.Color.SelectedColor,
-			siegeColor = menu.Minimap.SiegeColor.SelectedColor
-		if (hasSiege) {
-			MinimapSDK.DrawIcon("shield", position, size * 1.5, siegeColor)
-		}
-		const text = `${count}`
-		if (count < 10) {
-			MinimapSDK.DrawIcon(text, position, size, anyColor)
+		const w2s = RendererSDK.WorldToScreen(anchor)
+		if (w2s === undefined || GUIInfo.Contains(w2s)) {
 			return
 		}
-		const countArr = text.split("", count)
-		MinimapSDK.DrawIcon(
-			countArr[0],
-			position.Clone().SubtractScalarX(size / 2),
-			size,
-			anyColor
-		)
-		MinimapSDK.DrawIcon(
-			countArr[1],
-			position.Clone().AddScalarX(size / 2),
-			size,
-			anyColor
-		)
+		// the card is laid out at the world scale, so the menu's own scale does not resize it
+		MenuSDK.setHudWorldScale(ScaleOf(menu.World.Size.value))
+		const tint = MenuSDK.HudColors.readable(TeamTint(team)),
+			text = count.toString()
+		MenuSDK.SetActiveSurface(surface)
+		try {
+			if (menu.World.OnlyText.value) {
+				this.countOnly(w2s, text, tint)
+			} else {
+				this.chip(w2s, glyph, text, tint)
+			}
+		} finally {
+			MenuSDK.SetActiveSurface(undefined)
+		}
 	}
-	private minimapIcon(
-		menu: MenuManager,
-		size: number,
+	/**
+	 * The mark of a wave on the minimap: the game's own creep icon under `key`, the count on a
+	 * badge, or both, in the menu's colour - the siege one where the wave carries a siege creep.
+	 */
+	public DrawMinimap(
+		origin: Vector3,
+		count: number,
 		hasSiege: boolean,
-		position: Vector3
+		key: string,
+		menu: MenuManager
 	) {
-		const anyColor = menu.Minimap.Color.SelectedColor,
-			siegeColor = menu.Minimap.SiegeColor.SelectedColor
-		if (!hasSiege) {
-			MinimapSDK.DrawIcon("siege", position, size * 2, anyColor)
-			return
+		const style = menu.Minimap.Mark,
+			k = ScaleOf(menu.Minimap.Size.value),
+			color = hasSiege
+				? menu.Minimap.SiegeColor.SelectedColor
+				: menu.Minimap.Color.SelectedColor
+		if (style !== MinimapStyle.Text) {
+			MinimapSDK.DrawIcon(
+				this.minimapIconOf(hasSiege),
+				origin,
+				MINIMAP_ICON_SIZE * k,
+				color,
+				0,
+				key
+			)
 		}
-		MinimapSDK.DrawIcon("shield", position, size / 1.5, siegeColor)
+		if (style !== MinimapStyle.Icon) {
+			MenuSDK.setHudWorldScale(k)
+			const center = MinimapSDK.WorldToMinimap(origin)
+			MenuSDK.SetActiveSurface(surface)
+			try {
+				this.badge(center, count.toString(), color, style === MinimapStyle.Both)
+			} finally {
+				MenuSDK.SetActiveSurface(undefined)
+			}
+		}
 	}
-	private сontainsHUD(position: Vector2): boolean {
-		return (
-			GUIInfo.ContainsShop(position) ||
-			GUIInfo.ContainsMiniMap(position) ||
-			GUIInfo.ContainsLowerHUD(position) ||
-			GUIInfo.ContainsScoreboard(position)
+	/** The chip: the plate, the creep's art cut round at its left and the count at its right. */
+	private chip(w2s: Vector2, glyph: string, text: string, tint: Color) {
+		const height = MenuSDK.hudH(HEIGHT),
+			pad = MenuSDK.hudW(PAD),
+			padText = MenuSDK.hudW(PAD_TEXT),
+			gap = MenuSDK.hudW(GAP),
+			art = MenuSDK.hudH(GLYPH),
+			// digits are measured as zeroes so a changing count does not make the chip breathe
+			textW = MenuSDK.HudText.Width(text, FONT, WEIGHT),
+			width = Math.round(pad + art + gap + textW + padText),
+			x = Math.round(w2s.x - width / 2),
+			y = Math.round(w2s.y - height / 2),
+			centerY = y + height / 2
+		this.plate(x, y, width, height, tint)
+		// the art is the creep's portrait: cut round, it sits on the pill like a badge
+		this.pos.SetVector(x + pad, Math.round(centerY - art / 2))
+		this.size.SetVector(art, art)
+		MenuSDK.HudCard.Image(
+			glyph,
+			this.pos,
+			this.size,
+			Color.WhiteReadonly,
+			255,
+			Math.round(art / 2),
+			0,
+			"cover"
 		)
+		// the count is read in plain white whatever the faction; its colour stays on the glass
+		MenuSDK.HudText.Center(
+			x + width - padText - textW,
+			centerY,
+			textW,
+			text,
+			FONT,
+			Color.WhiteReadonly,
+			WEIGHT,
+			MenuSDK.EHudTextEffect.Outline,
+			undefined,
+			OUTLINE
+		)
+	}
+	/** The count on its own, in the faction's colour, cut out against the world under it. */
+	private countOnly(w2s: Vector2, text: string, tint: Color) {
+		const textW = MenuSDK.HudText.Width(text, TEXT_ONLY_FONT, WEIGHT)
+		MenuSDK.HudText.Center(
+			Math.round(w2s.x - textW / 2),
+			Math.round(w2s.y),
+			textW,
+			text,
+			TEXT_ONLY_FONT,
+			tint,
+			WEIGHT,
+			MenuSDK.EHudTextEffect.Outline,
+			undefined,
+			OUTLINE
+		)
+	}
+	/**
+	 * The plate under the chip: the menu's own card, so the glass, the rim, the blur and the halo are
+	 * whatever the theme dresses its panels in, with the faction's colour washed over the glass.
+	 */
+	private plate(x: number, y: number, w: number, h: number, tint: Color) {
+		const radius = MenuSDK.hudRadius(RADIUS)
+		this.box.pos1.SetVector(x, y)
+		this.box.pos2.SetVector(x + w, y + h)
+		MenuSDK.HudCard.Frame(this.box, 255, RADIUS, GUI.carved++)
+		MenuSDK.HudCard.Plate(x, y, w, h, radius, tint, MenuSDK.hudAlpha(TINT))
+	}
+	/**
+	 * The count on the minimap: a dark pill washed and rimmed in the mark's colour, so it holds on
+	 * the map's terrain whatever colour was picked, with the count in white on it. Beside an icon
+	 * it stands off to the icon's upper right, where the game itself puts a unit's number.
+	 */
+	private badge(center: Vector2, text: string, color: Color, beside: boolean) {
+		const height = MenuSDK.hudH(BADGE),
+			pad = MenuSDK.hudW(BADGE_PAD),
+			textW = MenuSDK.HudText.Width(text, BADGE_FONT, WEIGHT),
+			width = Math.max(height, Math.round(textW + pad * 2)),
+			offset = beside ? height * BADGE_OFFSET : 0,
+			x = Math.round(center.x + offset - width / 2),
+			y = Math.round(center.y - offset - height / 2),
+			radius = MenuSDK.hudRadius(BADGE / 2)
+		MenuSDK.HudCard.Plate(x, y, width, height, radius, Color.Black, BADGE_PLATE)
+		MenuSDK.HudCard.Chip(x, y, width, height, BADGE / 2, color, BADGE_WASH, 255)
+		MenuSDK.HudText.Center(
+			x,
+			y + height / 2,
+			width,
+			text,
+			BADGE_FONT,
+			Color.WhiteReadonly,
+			WEIGHT,
+			MenuSDK.EHudTextEffect.None
+		)
+	}
+	/** The siege icon where the game's atlas has one, the creep otherwise. */
+	private minimapIconOf(hasSiege: boolean) {
+		return hasSiege && MinimapSDK.GetIconSize(MINIMAP_SIEGE) !== undefined
+			? MINIMAP_SIEGE
+			: MINIMAP_CREEP
 	}
 }
