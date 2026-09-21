@@ -5,19 +5,6 @@ const NODE_NAME = "Creep waves"
 const OLD_PARENT = "Maphack"
 const OLD_NAME = "Creep waves tracker"
 
-/** What a wave is marked with on the minimap, in the order the row lists it. */
-const styleNames = ["Text", "Icon", "Icon and text"]
-
-/** The mark a wave leaves on the minimap, under the same index as its name. */
-export const enum MinimapStyle {
-	/** The count of creeps on a badge. */
-	Text,
-	/** The game's own creep icon, in the colour the menu picked. */
-	Icon,
-	/** The icon, with the count on a badge at its shoulder. */
-	Both
-}
-
 /** The chip a wave wears in the world. */
 class WorldMenu {
 	public readonly Tree: Menu.Node
@@ -53,60 +40,57 @@ class WorldMenu {
 	}
 }
 
-/** The mark a wave leaves on the minimap. */
+/** The icon a wave leaves on the minimap. */
 class MinimapMenu {
 	public readonly Tree: Menu.Node
-	public readonly Style: Menu.Dropdown
 	public readonly Size: Menu.Slider
 	public readonly Color: Menu.ColorPicker
-	/** The colour a wave with a siege creep in it is marked in instead. */
+	/** Whether a wave with a siege creep in it is marked in a colour of its own, and which. */
+	public readonly MarkSiege: Menu.Toggle
 	public readonly SiegeColor: Menu.ColorPicker
 
 	constructor(node: Menu.Node) {
 		this.Tree = node.AddNode(
 			"Minimap",
 			CreepWaveIcons.Minimap,
-			"The mark of a wave on the minimap:\nthe count, the creep icon, or both"
+			"The creep icon of a wave on the minimap"
 		)
 		this.Tree.SortNodes = false
 
-		this.Style = this.Tree.AddDropdown(
-			"Style",
-			[...styleNames],
-			MinimapStyle.Both,
-			"How a wave is marked:\nthe count, the creep icon, or both"
-		)
-		this.Style.IconPath = CreepWaveIcons.Style
-
-		// the mark is drawn 1:1 at the middle of the range; the old 0-100 size does not carry over
+		// the icon is drawn 1:1 at the middle of the range; the old 0-100 size does not carry over
 		this.Size = this.Tree.AddSlider(
 			"Size on minimap",
 			4,
 			0,
 			8,
 			0,
-			"Size of the mark on the minimap"
+			"Size of the icon on the minimap"
 		)
 		this.Size.IconPath = CreepWaveIcons.Size
 
 		this.Color = this.Tree.AddColorPicker(
 			"Color",
 			Color.Aqua,
-			"The colour of the icon and of the badge's rim"
+			"The colour of the icon"
 		)
 		this.Color.IconPath = CreepWaveIcons.Color
 
-		this.SiegeColor = this.Tree.AddColorPicker(
-			"Siege color",
-			new Color(255, 170, 60),
-			"The colour a wave with a siege creep\nin it is marked in instead"
+		// the colour rides the switch's own row: off, every wave wears the colour above
+		this.MarkSiege = this.Tree.AddToggle(
+			"Mark siege waves",
+			true,
+			"A wave with a siege creep in it\nwears a colour of its own"
 		)
-		this.SiegeColor.IconPath = CreepWaveIcons.Siege
+		this.MarkSiege.IconPath = CreepWaveIcons.Siege
+		this.SiegeColor = this.Tree.AddColorPicker("Siege color", new Color(255, 170, 60))
+		this.MarkSiege.PairColors(this.SiegeColor)
 	}
 
-	/** The mark the row picked. */
-	public get Mark(): MinimapStyle {
-		return this.Style.SelectedID
+	/** The colour a wave is marked in: the siege one where it carries a siege creep and the row asks. */
+	public ColorOf(hasSiege: boolean): Color {
+		return hasSiege && this.MarkSiege.value
+			? this.SiegeColor.SelectedColor
+			: this.Color.SelectedColor
 	}
 }
 
@@ -187,6 +171,5 @@ export class MenuManager {
 		}
 		MenuSDK.RenameStoredRow(stored, "Settings world", "World")
 		MenuSDK.RenameStoredRow(stored, "Settings minimap", "Minimap")
-		MenuSDK.RenameStoredRow(MenuManager.objectOf(stored.Minimap), "Type", "Style")
 	}
 }

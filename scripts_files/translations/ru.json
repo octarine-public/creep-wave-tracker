@@ -9,16 +9,12 @@
 	"Size in world": "Размер в мире",
 	"Size of the chip drawn over a wave": "Размер значка над волной",
 	"Minimap": "Мини-карта",
-	"The mark of a wave on the minimap:\nthe count, the creep icon, or both": "Отметка волны на мини-карте:\nчисло, иконка крипа или оба сразу",
-	"Style": "Стиль",
-	"Text": "Текст",
-	"Icon": "Иконка",
-	"Icon and text": "Иконка и текст",
-	"How a wave is marked:\nthe count, the creep icon, or both": "Как отмечать волну:\nчислом, иконкой крипа или обоими сразу",
 	"Size on minimap": "Размер на мини-карте",
-	"Size of the mark on the minimap": "Размер отметки на мини-карте",
 	"Color": "Цвет",
-	"The colour of the icon and of the badge's rim": "Цвет иконки и обводки бейджа с числом",
+	"Mark siege waves": "Отмечать катапульты",
 	"Siege color": "Цвет катапульты",
-	"The colour a wave with a siege creep\nin it is marked in instead": "Цвет отметки волны,\nв которой идёт катапульта"
+	"The creep icon of a wave on the minimap": "Иконка крипа волны на мини-карте",
+	"Size of the icon on the minimap": "Размер иконки на мини-карте",
+	"The colour of the icon": "Цвет иконки",
+	"A wave with a siege creep in it\nwears a colour of its own": "Волна с катапультой\nотмечается своим цветом"
 }

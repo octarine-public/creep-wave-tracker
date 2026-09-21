@@ -9,16 +9,12 @@
 	"Size in world": "世界中的大小",
 	"Size of the chip drawn over a wave": "兵线上方标签的大小",
 	"Minimap": "小地图",
-	"The mark of a wave on the minimap:\nthe count, the creep icon, or both": "小地图上的兵线标记：\n数量、小兵图标或两者同时",
-	"Style": "样式",
-	"Text": "文字",
-	"Icon": "图标",
-	"Icon and text": "图标和文字",
-	"How a wave is marked:\nthe count, the creep icon, or both": "兵线的标记方式：\n数量、小兵图标或两者同时",
 	"Size on minimap": "小地图上的大小",
-	"Size of the mark on the minimap": "小地图上标记的大小",
 	"Color": "颜色",
-	"The colour of the icon and of the badge's rim": "图标和数量徽章边框的颜色",
+	"Mark siege waves": "标记攻城车兵线",
 	"Siege color": "攻城车颜色",
-	"The colour a wave with a siege creep\nin it is marked in instead": "含有攻城车的兵线\n所使用的标记颜色"
+	"The creep icon of a wave on the minimap": "小地图上兵线的小兵图标",
+	"Size of the icon on the minimap": "小地图上图标的大小",
+	"The colour of the icon": "图标的颜色",
+	"A wave with a siege creep in it\nwears a colour of its own": "含有攻城车的兵线\n使用单独的颜色"
 }

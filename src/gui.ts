@@ -1,5 +1,5 @@
 import { surface } from "../render"
-import { MenuManager, MinimapStyle } from "./menu"
+import { MenuManager } from "./menu"
 
 /**
  * The chip a wave wears in the world, in dp at the slider's middle: the card the menu's own
@@ -37,18 +37,6 @@ const SIZE_STEP = 12
 const MINIMAP_CREEP = "creep"
 const MINIMAP_SIEGE = "siege"
 const MINIMAP_ICON_SIZE = 260
-/**
- * The badge a count stands on over the minimap, in dp: its height, which a one-digit count keeps
- * as its width, the room a longer count keeps to its rim, and the size it is read at.
- */
-const BADGE = 14
-const BADGE_PAD = 4
-const BADGE_FONT = 10
-/** How dark the plate under the badge is, out of 255, and how deep the rim's colour washes it. */
-const BADGE_PLATE = 170
-const BADGE_WASH = 60
-/** How far the badge stands off the icon's centre, as a share of its height, beside an icon. */
-const BADGE_OFFSET = 0.6
 
 /** The colour a wave is known by in the world: its faction's own green and red. */
 const RadiantTint = new Color(96, 220, 120)
@@ -110,41 +98,23 @@ export class GUI {
 		}
 	}
 	/**
-	 * The mark of a wave on the minimap: the game's own creep icon under `key`, the count on a
-	 * badge, or both, in the menu's colour - the siege one where the wave carries a siege creep.
+	 * The mark of a wave on the minimap: the game's own creep icon under `key`, in the menu's colour
+	 * - the siege one where the wave carries a siege creep and the menu asks for it.
 	 */
 	public DrawMinimap(
 		origin: Vector3,
-		count: number,
 		hasSiege: boolean,
 		key: string,
 		menu: MenuManager
 	) {
-		const style = menu.Minimap.Mark,
-			k = ScaleOf(menu.Minimap.Size.value),
-			color = hasSiege
-				? menu.Minimap.SiegeColor.SelectedColor
-				: menu.Minimap.Color.SelectedColor
-		if (style !== MinimapStyle.Text) {
-			MinimapSDK.DrawIcon(
-				this.minimapIconOf(hasSiege),
-				origin,
-				MINIMAP_ICON_SIZE * k,
-				color,
-				0,
-				key
-			)
-		}
-		if (style !== MinimapStyle.Icon) {
-			MenuSDK.setHudWorldScale(k)
-			const center = MinimapSDK.WorldToMinimap(origin)
-			MenuSDK.SetActiveSurface(surface)
-			try {
-				this.badge(center, count.toString(), color, style === MinimapStyle.Both)
-			} finally {
-				MenuSDK.SetActiveSurface(undefined)
-			}
-		}
+		MinimapSDK.DrawIcon(
+			this.minimapIconOf(hasSiege),
+			origin,
+			MINIMAP_ICON_SIZE * ScaleOf(menu.Minimap.Size.value),
+			menu.Minimap.ColorOf(hasSiege),
+			0,
+			key
+		)
 	}
 	/** The chip: the plate, the creep's art cut round at its left and the count at its right. */
 	private chip(w2s: Vector2, glyph: string, text: string, tint: Color) {
@@ -213,33 +183,6 @@ export class GUI {
 		this.box.pos2.SetVector(x + w, y + h)
 		MenuSDK.HudCard.Frame(this.box, 255, RADIUS, GUI.carved++)
 		MenuSDK.HudCard.Plate(x, y, w, h, radius, tint, MenuSDK.hudAlpha(TINT))
-	}
-	/**
-	 * The count on the minimap: a dark pill washed and rimmed in the mark's colour, so it holds on
-	 * the map's terrain whatever colour was picked, with the count in white on it. Beside an icon
-	 * it stands off to the icon's upper right, where the game itself puts a unit's number.
-	 */
-	private badge(center: Vector2, text: string, color: Color, beside: boolean) {
-		const height = MenuSDK.hudH(BADGE),
-			pad = MenuSDK.hudW(BADGE_PAD),
-			textW = MenuSDK.HudText.Width(text, BADGE_FONT, WEIGHT),
-			width = Math.max(height, Math.round(textW + pad * 2)),
-			offset = beside ? height * BADGE_OFFSET : 0,
-			x = Math.round(center.x + offset - width / 2),
-			y = Math.round(center.y - offset - height / 2),
-			radius = MenuSDK.hudRadius(BADGE / 2)
-		MenuSDK.HudCard.Plate(x, y, width, height, radius, Color.Black, BADGE_PLATE)
-		MenuSDK.HudCard.Chip(x, y, width, height, BADGE / 2, color, BADGE_WASH, 255)
-		MenuSDK.HudText.Center(
-			x,
-			y + height / 2,
-			width,
-			text,
-			BADGE_FONT,
-			Color.WhiteReadonly,
-			WEIGHT,
-			MenuSDK.EHudTextEffect.None
-		)
 	}
 	/** The siege icon where the game's atlas has one, the creep otherwise. */
 	private minimapIconOf(hasSiege: boolean) {

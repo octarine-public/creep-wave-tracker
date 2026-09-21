@@ -7,12 +7,10 @@ export const CreepWaveIcons = {
 	State: Menu.Icons.Power,
 	/** The section of the chip a wave wears in the world. */
 	World: Menu.Icons.Globe,
-	/** The section of the mark a wave leaves on the minimap. */
+	/** The section of the icon a wave leaves on the minimap. */
 	Minimap: `${Paths.Icons}/minimap.svg`,
 	/** The count written on its own, with no card under it. */
 	OnlyText: Menu.Icons.Type,
-	/** What a wave is marked with on the minimap: the count, the icon, or both. */
-	Style: Menu.Icons.SquareStack,
 	Size: Menu.Icons.Expand,
 	Color: Menu.Icons.Pipette,
 	/** The catapult a wave comes with: the colour a wave carrying one is marked in. */

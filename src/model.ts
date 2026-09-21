@@ -74,7 +74,7 @@ export class CreepGroupModel {
 			return
 		}
 		const position = this.Position
-		gui.DrawMinimap(position, this.Count, this.HasSiege, key, menu)
+		gui.DrawMinimap(position, this.HasSiege, key, menu)
 		// the chip stands over the middle of the wave, well over a creep's health bar
 		gui.DrawWorld(
 			position.AddScalarZ(this.FirstCreep.HealthBarOffset + WORLD_LIFT),
