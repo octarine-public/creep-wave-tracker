@@ -1,4 +1,4 @@
-import { canvas, surface } from "../render"
+import { surface } from "../render"
 import { MenuManager } from "./menu"
 
 /**
@@ -38,13 +38,6 @@ const MINIMAP_CREEP = "creep"
 const MINIMAP_SIEGE = "siege"
 const MINIMAP_ICON_SIZE = 260
 
-/** The upcoming lane route, kept readable until the final stretch fades out. */
-const TRAIL_LENGTH = 750
-const TRAIL_FADE_START = 450
-const TRAIL_STEP = 24
-const TRAIL_WIDTH = 2
-const TRAIL_ALPHA = 180
-
 /** The colour a wave is known by in the world: its faction's own green and red. */
 const RadiantTint = new Color(96, 220, 120)
 const DireTint = new Color(227, 61, 61)
@@ -83,12 +76,10 @@ export class GUI {
 		team: Team,
 		glyph: string,
 		count: number,
-		menu: MenuManager,
-		lane: MapArea
+		menu: MenuManager
 	) {
 		// the card is laid out at the world scale, so the menu's own scale does not resize it
 		MenuSDK.setHudWorldScale(ScaleOf(menu.World.Size.value))
-		this.waveTrail(anchor, team, lane)
 		const w2s = RendererSDK.WorldToScreen(anchor)
 		if (w2s === undefined || GUIInfo.Contains(w2s)) {
 			return
@@ -104,57 +95,6 @@ export class GUI {
 			}
 		} finally {
 			MenuSDK.SetActiveSurface(undefined)
-		}
-	}
-	/** Follows the lane's next corners on the terrain, underneath the wave's badge. */
-	private waveTrail(anchor: Vector3, team: Team, lane: MapArea) {
-		let target = DotaMap.GetCreepCurrentTarget(anchor, team, lane)
-		if (target === undefined) {
-			return
-		}
-		const visited = new Set<CreepPathCorner>(),
-			color = TeamTint(team).Clone(),
-			width = MenuSDK.hudH(TRAIL_WIDTH)
-		let position = anchor,
-			projected = RendererSDK.WorldToScreen(position),
-			traveled = 0
-		while (target !== undefined && traveled < TRAIL_LENGTH) {
-			const destination = target.Position,
-				dx = destination.x - position.x,
-				dy = destination.y - position.y,
-				distance = Math.hypot(dx, dy)
-			if (distance <= 0.01) {
-				if (visited.has(target)) {
-					break
-				}
-				visited.add(target)
-				target = target.TargetPath
-				continue
-			}
-			const step = Math.min(TRAIL_STEP, distance, TRAIL_LENGTH - traveled),
-				next = new Vector3(
-					position.x + (dx / distance) * step,
-					position.y + (dy / distance) * step,
-					0
-				)
-			next.z = Dota2SDK.GetPositionHeight(next)
-			const nextProjected = RendererSDK.WorldToScreen(next)
-			traveled += step
-			if (
-				projected !== undefined &&
-				nextProjected !== undefined &&
-				!GUIInfo.Contains(projected) &&
-				!GUIInfo.Contains(nextProjected)
-			) {
-				const fade = Math.max(
-					0,
-					(traveled - TRAIL_FADE_START) / (TRAIL_LENGTH - TRAIL_FADE_START)
-				)
-				color.SetA(Math.round(TRAIL_ALPHA * (1 - fade) ** 2))
-				canvas.Line(projected, nextProjected, color, width)
-			}
-			position = next
-			projected = nextProjected
 		}
 	}
 	/**

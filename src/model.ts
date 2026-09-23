@@ -73,6 +73,6 @@ export class CreepGroupModel {
 		}
 		const position = this.Position
 		gui.DrawMinimap(position, this.HasSiege, key, menu)
-		gui.DrawWorld(position, this.Team, this.Glyph, this.Count, menu, this.Lane)
+		gui.DrawWorld(position, this.Team, this.Glyph, this.Count, menu)
 	}
 }
