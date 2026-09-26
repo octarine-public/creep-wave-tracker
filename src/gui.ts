@@ -37,6 +37,13 @@ const SIZE_STEP = 12
 const MINIMAP_CREEP = "creep"
 const MINIMAP_SIEGE = "siege"
 const MINIMAP_ICON_SIZE = 260
+/**
+ * How wide each icon's glyph is inside its cell of `minimap_sheet`, in the sheet's pixels: both
+ * cells are 32 wide, but the creep's disc fills its cell while the siege's glyph keeps to the
+ * middle 18, so it is drawn larger by as much to read the same size.
+ */
+const MINIMAP_CREEP_GLYPH = 32
+const MINIMAP_SIEGE_GLYPH = 18
 
 /** The colour a wave is known by in the world: its faction's own green and red. */
 const RadiantTint = new Color(96, 220, 120)
@@ -99,7 +106,7 @@ export class GUI {
 	}
 	/**
 	 * The mark of a wave on the minimap: the game's own creep icon under `key`, in the menu's colour
-	 * - the siege one where the wave carries a siege creep, scaled to the regular icon's size.
+	 * - the siege one where the wave carries a siege creep, its glyph grown to the regular one's size.
 	 */
 	public DrawMinimap(
 		origin: Vector3,
@@ -107,13 +114,13 @@ export class GUI {
 		key: string,
 		menu: MenuManager
 	) {
-		const icon = this.minimapIconOf(hasSiege)
+		const icon = this.minimapIconOf(hasSiege),
+			glyphScale =
+				icon === MINIMAP_SIEGE ? MINIMAP_CREEP_GLYPH / MINIMAP_SIEGE_GLYPH : 1
 		MinimapSDK.DrawIcon(
 			icon,
 			origin,
-			MINIMAP_ICON_SIZE *
-				ScaleOf(menu.Minimap.Size.value) *
-				this.minimapIconScale(icon),
+			MINIMAP_ICON_SIZE * ScaleOf(menu.Minimap.Size.value) * glyphScale,
 			menu.Minimap.ColorOf(hasSiege),
 			0,
 			`${key}_${icon}`
@@ -192,19 +199,5 @@ export class GUI {
 		return hasSiege && MinimapSDK.GetIconSize(MINIMAP_SIEGE) !== undefined
 			? MINIMAP_SIEGE
 			: MINIMAP_CREEP
-	}
-	/** Compensates for the atlas dimensions while preserving the icon's aspect ratio. */
-	private minimapIconScale(icon: string) {
-		if (icon === MINIMAP_CREEP) {
-			return 1
-		}
-		const regularSize = MinimapSDK.GetIconSize(MINIMAP_CREEP),
-			iconSize = MinimapSDK.GetIconSize(icon)
-		if (regularSize === undefined || iconSize === undefined) {
-			return 1
-		}
-		const regularExtent = Math.max(regularSize.x, regularSize.y),
-			iconExtent = Math.max(iconSize.x, iconSize.y)
-		return regularExtent > 0 && iconExtent > 0 ? regularExtent / iconExtent : 1
 	}
 }
