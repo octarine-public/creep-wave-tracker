@@ -1,7 +1,7 @@
 # Creep Wave Tracker
 - [x] Enemy creep waves in the fog, sorted by lane and by wave
 - [x] A chip over the wave in the world: the creep's art and the count, the siege creep first
-- [x] The creep icon on the minimap in a colour of your own, and another for a wave with a siege creep
+- [x] The creep icon on the minimap in a colour of your own, and a lighter shade of it for a wave with a siege creep
 ---
 # Трекер волн крипов
 - [x] Вражеские волны крипов в тумане войны, по линиям и по волнам

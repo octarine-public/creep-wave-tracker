@@ -12,9 +12,8 @@
 	"Size on minimap": "Размер на мини-карте",
 	"Color": "Цвет",
 	"Mark siege waves": "Отмечать катапульты",
-	"Siege color": "Цвет катапульты",
 	"The creep icon of a wave on the minimap": "Иконка крипа волны на мини-карте",
 	"Size of the icon on the minimap": "Размер иконки на мини-карте",
 	"The colour of the icon": "Цвет иконки",
-	"A wave with a siege creep in it\nwears a colour of its own": "Волна с катапультой\nотмечается своим цветом"
+	"A wave with a siege creep in it\nwears a lighter shade of the colour": "Волна с катапультой\nотмечается более светлым оттенком цвета"
 }

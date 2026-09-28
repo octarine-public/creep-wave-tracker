@@ -33,17 +33,9 @@ const OUTLINE = 0.5
 const SIZE_BASE = 4
 const SIZE_STEP = 12
 
-/** The minimap's names for a creep and for a siege creep, and the size the icon is drawn at 1:1. */
+/** The minimap's name for a creep, and the size the icon is drawn at 1:1. */
 const MINIMAP_CREEP = "creep"
-const MINIMAP_SIEGE = "siege"
 const MINIMAP_ICON_SIZE = 260
-/**
- * How wide each icon's glyph is inside its cell of `minimap_sheet`, in the sheet's pixels: both
- * cells are 32 wide, but the creep's disc fills its cell while the siege's glyph keeps to the
- * middle 18, so it is drawn larger by as much to read the same size.
- */
-const MINIMAP_CREEP_GLYPH = 32
-const MINIMAP_SIEGE_GLYPH = 18
 
 /** The colour a wave is known by in the world: its faction's own green and red. */
 const RadiantTint = new Color(96, 220, 120)
@@ -106,7 +98,7 @@ export class GUI {
 	}
 	/**
 	 * The mark of a wave on the minimap: the game's own creep icon under `key`, in the menu's colour
-	 * - the siege one where the wave carries a siege creep, its glyph grown to the regular one's size.
+	 * - the siege one where the wave carries a siege creep.
 	 */
 	public DrawMinimap(
 		origin: Vector3,
@@ -114,27 +106,29 @@ export class GUI {
 		key: string,
 		menu: MenuManager
 	) {
-		const icon = this.minimapIconOf(hasSiege),
-			glyphScale =
-				icon === MINIMAP_SIEGE ? MINIMAP_CREEP_GLYPH / MINIMAP_SIEGE_GLYPH : 1
 		MinimapSDK.DrawIcon(
-			icon,
+			MINIMAP_CREEP,
 			origin,
-			MINIMAP_ICON_SIZE * ScaleOf(menu.Minimap.Size.value) * glyphScale,
+			MINIMAP_ICON_SIZE * ScaleOf(menu.Minimap.Size.value),
 			menu.Minimap.ColorOf(hasSiege),
 			0,
-			`${key}_${icon}`
+			`${key}_${MINIMAP_CREEP}`
 		)
 	}
 	/** The chip: the plate, the creep's art cut round at its left and the count at its right. */
 	private chip(w2s: Vector2, glyph: string, text: string, tint: Color) {
+		// a count the host has not measured yet comes back 0 wide; drawn like that the plate would
+		// stand a frame without it and then widen, so the chip waits the frame out instead
+		const textW = MenuSDK.HudText.Width(text, FONT, WEIGHT)
+		if (textW === 0) {
+			return
+		}
 		const height = MenuSDK.hudH(HEIGHT),
 			pad = MenuSDK.hudW(PAD),
 			padText = MenuSDK.hudW(PAD_TEXT),
 			gap = MenuSDK.hudW(GAP),
 			art = MenuSDK.hudH(GLYPH),
 			// digits are measured as zeroes so a changing count does not make the chip breathe
-			textW = MenuSDK.HudText.Width(text, FONT, WEIGHT),
 			width = Math.round(pad + art + gap + textW + padText),
 			x = Math.round(w2s.x - width / 2),
 			y = Math.round(w2s.y - height / 2),
@@ -193,11 +187,5 @@ export class GUI {
 		this.box.pos2.SetVector(x + w, y + h)
 		MenuSDK.HudCard.Frame(this.box, 255, RADIUS, GUI.carved++)
 		MenuSDK.HudCard.Plate(x, y, w, h, radius, tint, MenuSDK.hudAlpha(TINT))
-	}
-	/** The siege icon where the game's atlas has one, the creep otherwise. */
-	private minimapIconOf(hasSiege: boolean) {
-		return hasSiege && MinimapSDK.GetIconSize(MINIMAP_SIEGE) !== undefined
-			? MINIMAP_SIEGE
-			: MINIMAP_CREEP
 	}
 }

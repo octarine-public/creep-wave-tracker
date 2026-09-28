@@ -4,6 +4,12 @@ const NODE_NAME = "Creep waves"
 /** The node the page stood under, and the name it had there, before it came out to the tab. */
 const OLD_PARENT = "Maphack"
 const OLD_NAME = "Creep waves tracker"
+/** How far a siege wave's colour is washed toward white, 0 to 1: a shade of the same colour, not another. */
+const SIEGE_LIGHTEN = 0.5
+
+function Lighten(channel: number) {
+	return Math.round(channel + (255 - channel) * SIEGE_LIGHTEN)
+}
 
 /** The chip a wave wears in the world. */
 class WorldMenu {
@@ -45,9 +51,9 @@ class MinimapMenu {
 	public readonly Tree: Menu.Node
 	public readonly Size: Menu.Slider
 	public readonly Color: Menu.ColorPicker
-	/** Whether a wave with a siege creep in it is marked in a colour of its own, and which. */
+	/** Whether a wave with a siege creep in it is marked in a lighter shade of {@link Color}. */
 	public readonly MarkSiege: Menu.Toggle
-	public readonly SiegeColor: Menu.ColorPicker
+	private readonly siegeColor = new Color()
 
 	constructor(node: Menu.Node) {
 		this.Tree = node.AddNode(
@@ -75,22 +81,30 @@ class MinimapMenu {
 		)
 		this.Color.IconPath = CreepWaveIcons.Color
 
-		// the colour rides the switch's own row: off, every wave wears the colour above
+		// off, every wave wears the colour above as it is
 		this.MarkSiege = this.Tree.AddToggle(
 			"Mark siege waves",
 			true,
-			"A wave with a siege creep in it\nwears a colour of its own"
+			"A wave with a siege creep in it\nwears a lighter shade of the colour"
 		)
 		this.MarkSiege.IconPath = CreepWaveIcons.Siege
-		this.SiegeColor = this.Tree.AddColorPicker("Siege color", new Color(255, 170, 60))
-		this.MarkSiege.PairColors(this.SiegeColor)
 	}
 
-	/** The colour a wave is marked in: the siege one where it carries a siege creep and the row asks. */
+	/**
+	 * The colour a wave is marked in: the one above, washed {@link SIEGE_LIGHTEN} of the way to
+	 * white where it carries a siege creep and the row asks.
+	 */
 	public ColorOf(hasSiege: boolean): Color {
-		return hasSiege && this.MarkSiege.value
-			? this.SiegeColor.SelectedColor
-			: this.Color.SelectedColor
+		const color = this.Color.SelectedColor
+		if (!hasSiege || !this.MarkSiege.value) {
+			return color
+		}
+		return this.siegeColor.SetColor(
+			Lighten(color.r),
+			Lighten(color.g),
+			Lighten(color.b),
+			color.a
+		)
 	}
 }
 

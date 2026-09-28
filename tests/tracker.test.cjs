@@ -9,7 +9,9 @@ function tracker() {
 	const entities = [],
 		draws = [],
 		listeners = new Map()
-	const game = { LocalTeam: 0, UIState: 1 }
+	const game = { LocalTeam: 0, UIState: 1, RawGameTime: 0 }
+	/** The spots our vision covers, by their x: every other spot is in the fog. */
+	const vision = new Set()
 	class Vector3 {
 		constructor(x = 0, y = 0, z = 0) {
 			Object.assign(this, { x, y, z })
@@ -70,6 +72,7 @@ function tracker() {
 		Dota2SDK: { GameRules: { GameState: 1 } },
 		PathData: { ImagePath: "images", HeroImagePath: "heroes" },
 		EntityManager: { GetEntitiesByClass: () => entities },
+		FogOfWar: { IsPointVisible: position => vision.has(position.x) },
 		EventsSDK: {
 			on(name, callback) {
 				listeners.set(name, callback)
@@ -128,6 +131,7 @@ function tracker() {
 	}
 	return {
 		game,
+		vision,
 		entities,
 		Creep,
 		Siege,
@@ -142,6 +146,7 @@ function tracker() {
 			return creep
 		},
 		counts(dt = 0.03) {
+			game.RawGameTime += dt
 			emit("PostDataUpdate", dt)
 			return drawCounts()
 		}
@@ -248,4 +253,54 @@ test("counts follow the SDK registry even without creation or destruction notifi
 	assert.deepEqual(t.counts(), [1])
 	t.entities.length = 0
 	assert.deepEqual(t.counts(), [])
+})
+
+test("a creep whose guessed spot our vision covers is dropped once the grace runs out", () => {
+	const t = tracker()
+	t.game.LocalTeam = 2
+	const creep = t.add(3, { Position: new t.Vector3(1000) })
+	t.add(3, { Position: new t.Vector3(1200) })
+	assert.deepEqual(t.counts(0.25), [2])
+	t.vision.add(1000)
+	assert.deepEqual(t.counts(0.25), [2])
+	assert.deepEqual(t.counts(0.25), [2])
+	assert.deepEqual(t.counts(0.25), [1])
+	// the guess stays given up even as it walks on into the fog, until the creep is seen
+	creep.Position = new t.Vector3(1100)
+	assert.deepEqual(t.counts(0.25), [1])
+	creep.IsVisible = true
+	assert.deepEqual(t.counts(0.25), [])
+	creep.IsVisible = false
+	assert.deepEqual(t.counts(0.25), [2])
+})
+
+test("a guessed spot that goes back into the fog within the grace keeps the creep", () => {
+	const t = tracker()
+	t.game.LocalTeam = 2
+	t.add(3, { Position: new t.Vector3(1000) })
+	t.vision.add(1000)
+	assert.deepEqual(t.counts(0.25), [1])
+	t.vision.clear()
+	assert.deepEqual(t.counts(0.25), [1])
+	t.vision.add(1000)
+	assert.deepEqual(t.counts(0.25), [1])
+	assert.deepEqual(t.counts(0.25), [1])
+	assert.deepEqual(t.counts(0.25), [])
+})
+
+test("destroyed creeps and ended games forget empty spots", () => {
+	const t = tracker()
+	t.game.LocalTeam = 2
+	const creep = t.add(3, { Position: new t.Vector3(1000) })
+	t.vision.add(1000)
+	t.counts(0.25)
+	t.counts(0.5)
+	assert.deepEqual(t.counts(0.25), [])
+	t.emit("GameEnded")
+	t.vision.clear()
+	assert.deepEqual(t.counts(0.25), [1])
+	t.vision.add(1000)
+	t.counts(0.25)
+	t.emit("EntityDestroyed", creep)
+	assert.deepEqual(t.counts(0.25), [1])
 })
