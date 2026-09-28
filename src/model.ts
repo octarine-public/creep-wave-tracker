@@ -66,13 +66,13 @@ export class CreepGroupModel {
 			creep.Distance(this.FirstCreep) <= reach
 		)
 	}
-	/** The chip in the world and the mark on the minimap, for a wave out of sight. */
-	public Draw(gui: GUI, menu: MenuManager, key: string) {
+	/** The chip in the world and the mark on the minimap, for a wave out of sight in its `slot`. */
+	public Draw(gui: GUI, menu: MenuManager, slot: number) {
 		if (this.IsVisible) {
 			return
 		}
 		const position = this.Position
-		gui.DrawMinimap(position, this.HasSiege, key, menu)
-		gui.DrawWorld(position, this.Team, this.Glyph, this.Count, menu)
+		gui.DrawMinimap(position, this.HasSiege, slot, menu)
+		gui.DrawWorld(position, this.Team, this.Glyph, this.Count, slot, menu)
 	}
 }

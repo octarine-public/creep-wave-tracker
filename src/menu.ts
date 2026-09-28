@@ -81,7 +81,6 @@ class MinimapMenu {
 		)
 		this.Color.IconPath = CreepWaveIcons.Color
 
-		// off, every wave wears the colour above as it is
 		this.MarkSiege = this.Tree.AddToggle(
 			"Mark siege waves",
 			true,

@@ -66,11 +66,13 @@ new (class CCreepWaveTracker {
 			// the mark on the minimap is kept under the wave's place in the list: an icon drawn
 			// under a key and then not drawn again is gone the next frame, so a wave that broke
 			// up leaves nothing behind
-			this.groups[i].Draw(this.gui, this.menu, `creep_wave_${i}`)
+			this.groups[i].Draw(this.gui, this.menu, i)
 		}
 	}
 	protected PostDataUpdate() {
-		if (this.isPostGame) {
+		if (!this.shouldDraw) {
+			this.groups.clear()
+			this.emptySince.clear()
 			return
 		}
 		this.regroup()
@@ -120,7 +122,6 @@ new (class CCreepWaveTracker {
 			return true
 		}
 		if (!FogOfWar.IsPointVisible(creep.Position)) {
-			// the spot went back into the fog before the grace ran out: nothing was proven
 			this.emptySince.delete(creep)
 			return false
 		}

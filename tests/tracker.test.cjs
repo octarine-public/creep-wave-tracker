@@ -9,7 +9,9 @@ function tracker() {
 	const entities = [],
 		draws = [],
 		listeners = new Map()
-	const game = { LocalTeam: 0, UIState: 1, RawGameTime: 0 }
+	const game = { LocalTeam: 0, UIState: 1, RawGameTime: 0 },
+		state = { value: true }
+	let probes = 0
 	/** The spots our vision covers, by their x: every other spot is in the fog. */
 	const vision = new Set()
 	class Vector3 {
@@ -72,7 +74,12 @@ function tracker() {
 		Dota2SDK: { GameRules: { GameState: 1 } },
 		PathData: { ImagePath: "images", HeroImagePath: "heroes" },
 		EntityManager: { GetEntitiesByClass: () => entities },
-		FogOfWar: { IsPointVisible: position => vision.has(position.x) },
+		FogOfWar: {
+			IsPointVisible(position) {
+				probes++
+				return vision.has(position.x)
+			}
+		},
 		EventsSDK: {
 			on(name, callback) {
 				listeners.set(name, callback)
@@ -93,7 +100,7 @@ function tracker() {
 		"./translations": {},
 		"./menu": {
 			MenuManager: class {
-				State = { value: true }
+				State = state
 			}
 		},
 		"./gui": {
@@ -131,7 +138,11 @@ function tracker() {
 	}
 	return {
 		game,
+		state,
 		vision,
+		get probes() {
+			return probes
+		},
 		entities,
 		Creep,
 		Siege,
@@ -302,5 +313,19 @@ test("destroyed creeps and ended games forget empty spots", () => {
 	t.vision.add(1000)
 	t.counts(0.25)
 	t.emit("EntityDestroyed", creep)
+	assert.deepEqual(t.counts(0.25), [1])
+})
+
+test("a disabled tracker leaves the fog alone and forgets empty spots", () => {
+	const t = tracker()
+	t.game.LocalTeam = 2
+	t.add(3, { Position: new t.Vector3(1000) })
+	t.vision.add(1000)
+	assert.deepEqual(t.counts(0.25), [1])
+	t.state.value = false
+	const probes = t.probes
+	assert.deepEqual(t.counts(1), [])
+	assert.equal(t.probes, probes)
+	t.state.value = true
 	assert.deepEqual(t.counts(0.25), [1])
 })

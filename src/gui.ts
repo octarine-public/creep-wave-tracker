@@ -50,6 +50,10 @@ function ScaleOf(value: number) {
 	return (value + SIZE_STEP) / (SIZE_BASE + SIZE_STEP)
 }
 
+function CountWidth(text: string) {
+	return MenuSDK.HudText.Width(text, FONT, WEIGHT)
+}
+
 export class GUI {
 	/**
 	 * How many cards this frame has carved so far, over every wave. Cards carved by one and the
@@ -60,6 +64,7 @@ export class GUI {
 	private readonly box = new Rectangle()
 	private readonly pos = new Vector2()
 	private readonly size = new Vector2()
+	private readonly counts: MenuSDK.HeldText[] = []
 
 	/** A frame is starting: no card has been carved on the surface yet. */
 	public static BeginFrame() {
@@ -75,6 +80,7 @@ export class GUI {
 		team: Team,
 		glyph: string,
 		count: number,
+		slot: number,
 		menu: MenuManager
 	) {
 		// the card is laid out at the world scale, so the menu's own scale does not resize it
@@ -90,20 +96,20 @@ export class GUI {
 			if (menu.World.OnlyText.value) {
 				this.countOnly(w2s, text, tint)
 			} else {
-				this.chip(w2s, glyph, text, tint)
+				this.chip(w2s, glyph, text, tint, slot)
 			}
 		} finally {
 			MenuSDK.SetActiveSurface(undefined)
 		}
 	}
 	/**
-	 * The mark of a wave on the minimap: the game's own creep icon under `key`, in the menu's colour
-	 * - the siege one where the wave carries a siege creep.
+	 * The mark of a wave on the minimap: the game's own creep icon under the wave's `slot`, in the
+	 * menu's colour - the siege one where the wave carries a siege creep.
 	 */
 	public DrawMinimap(
 		origin: Vector3,
 		hasSiege: boolean,
-		key: string,
+		slot: number,
 		menu: MenuManager
 	) {
 		MinimapSDK.DrawIcon(
@@ -112,23 +118,21 @@ export class GUI {
 			MINIMAP_ICON_SIZE * ScaleOf(menu.Minimap.Size.value),
 			menu.Minimap.ColorOf(hasSiege),
 			0,
-			`${key}_${MINIMAP_CREEP}`
+			`creep_wave_${slot}_${MINIMAP_CREEP}`
 		)
 	}
 	/** The chip: the plate, the creep's art cut round at its left and the count at its right. */
-	private chip(w2s: Vector2, glyph: string, text: string, tint: Color) {
-		// a count the host has not measured yet comes back 0 wide; drawn like that the plate would
-		// stand a frame without it and then widen, so the chip waits the frame out instead
-		const textW = MenuSDK.HudText.Width(text, FONT, WEIGHT)
-		if (textW === 0) {
+	private chip(w2s: Vector2, glyph: string, text: string, tint: Color, slot: number) {
+		const count = (this.counts[slot] ??= new MenuSDK.HeldText(CountWidth))
+		if (!count.Take(text)) {
 			return
 		}
-		const height = MenuSDK.hudH(HEIGHT),
+		const textW = count.Width,
+			height = MenuSDK.hudH(HEIGHT),
 			pad = MenuSDK.hudW(PAD),
 			padText = MenuSDK.hudW(PAD_TEXT),
 			gap = MenuSDK.hudW(GAP),
 			art = MenuSDK.hudH(GLYPH),
-			// digits are measured as zeroes so a changing count does not make the chip breathe
 			width = Math.round(pad + art + gap + textW + padText),
 			x = Math.round(w2s.x - width / 2),
 			y = Math.round(w2s.y - height / 2),
@@ -152,7 +156,7 @@ export class GUI {
 			x + width - padText - textW,
 			centerY,
 			textW,
-			text,
+			count.Text,
 			FONT,
 			Color.WhiteReadonly,
 			WEIGHT,
