@@ -1,4 +1,5 @@
 import { CreepWaveIcons } from "./icons"
+import { AddLaneAndFarmPage } from "./lane-and-farm"
 
 const NODE_NAME = "Creep waves"
 /** The node the page stood under, and the name it had there, before it came out to the tab. */
@@ -114,24 +115,27 @@ export class MenuManager {
 	public readonly World: WorldMenu
 	public readonly Minimap: MinimapMenu
 
-	private readonly tree = Menu.AddEntry("Visual")
-	private readonly node = this.tree.AddNode(
-		NODE_NAME,
-		CreepWaveIcons.Waves,
-		"Enemy creep waves in the fog,\nover the lane and on the minimap"
-	)
+	private readonly node: Menu.Node
 
 	constructor() {
-		this.node.SortNodes = false
-		// a config written while the page stood under "Maphack", under its old name, keeps
-		// its values where the page stands now, and the rows renamed since keep theirs
+		// a config written while the page stood under "Maphack", under its old name, comes
+		// out to Visual first and goes on into the group from there
+		const visual = Menu.AddEntry("Visual")
 		MenuSDK.AddConfigMigration(raw =>
-			this.migrate(
-				MenuManager.carryOver(MenuSDK.ConfigSubtreeOf(raw, this.tree.entry))
-			)
+			MenuManager.carryOver(MenuSDK.ConfigSubtreeOf(raw, visual.entry))
 		)
-		this.node.entry.stored =
-			MenuManager.carryOver(this.tree.entry.stored) ?? this.node.entry.stored
+		MenuManager.carryOver(visual.entry.stored)
+
+		this.node = AddLaneAndFarmPage(
+			NODE_NAME,
+			CreepWaveIcons.Waves,
+			"Enemy creep waves in the fog,\nover the lane and on the minimap"
+		)
+		this.node.SortNodes = false
+		// the rows renamed since keep their saved values
+		MenuSDK.AddConfigMigration(raw =>
+			this.migrate(MenuSDK.ConfigSubtreeOf(raw, this.node.entry))
+		)
 		this.migrate(this.node.entry.stored)
 
 		// the script's own switch rides the top bar beside the breadcrumb and gates the page
@@ -148,20 +152,17 @@ export class MenuManager {
 
 	/**
 	 * Carries the page's rows out of the tree it used to stand in, under the name it used to
-	 * have, over to where it stands now. Idempotent, as a config migration must be: a config
-	 * already holding the page at its new place keeps what it has there, and the old key goes
-	 * either way.
-	 * @returns the rows at their new place, for a menu built after the config landed.
+	 * have, out to Visual, where the group picks it up. Idempotent, as a config migration must
+	 * be: a config already holding the page on Visual keeps what it has there, and the old key
+	 * goes either way.
 	 */
-	private static carryOver(
-		parent: Nullable<MenuSDK.ConfigObject>
-	): Nullable<MenuSDK.ConfigObject> {
+	private static carryOver(parent: Nullable<MenuSDK.ConfigObject>): void {
 		if (parent === undefined) {
-			return undefined
+			return
 		}
 		const existing = parent[NODE_NAME]
 		if (existing !== undefined && MenuManager.objectOf(existing) === undefined) {
-			return undefined
+			return
 		}
 		const oldParent = MenuManager.objectOf(parent[OLD_PARENT])
 		const saved = MenuManager.objectOf(oldParent?.[OLD_NAME])
@@ -169,7 +170,6 @@ export class MenuManager {
 			parent[NODE_NAME] ??= saved
 			delete oldParent[OLD_NAME]
 		}
-		return MenuManager.objectOf(parent[NODE_NAME])
 	}
 	/** The rows a stored config keeps under a node, or nothing when the value is not a node. */
 	private static objectOf(value: unknown): Nullable<MenuSDK.ConfigObject> {
