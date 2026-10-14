@@ -417,6 +417,15 @@ declare class Unit extends Entity {
 	public TurnTime(angle: number, currentTurnRate?: boolean): number
 	public TurnRate(currentTurnRate?: boolean): number
 	/**
+	 * `yaw` turned toward `heading` the short way round, by no more than the unit turns in
+	 * `seconds` at the rate {@link TurnTime} assumes: 30 × {@link TurnRate} radians a second,
+	 * without the game's turn acceleration. Both in degrees, `yaw` from -180 up; the result lies in
+	 * [0, 360).
+	 * @example
+	 * angles.y = courier.TurnYawToward(angles.y, position.GetAngleTo(next), Math.min(dt, 0.1))
+	 */
+	public TurnYawToward(yaw: number, heading: number, seconds: number): number
+	/**
 	 * Seconds the unit needs to turn `angle` radians from its heading: to face a path only as
 	 * far as walking needs when `movement`, all the way otherwise.
 	 */
