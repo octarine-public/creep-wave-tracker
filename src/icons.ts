@@ -9,6 +9,10 @@ export const CreepWaveIcons = {
 	World: Menu.Icons.Globe,
 	/** The section of the icon a wave leaves on the minimap. */
 	Minimap: `${Paths.Icons}/minimap.svg`,
+	/** The section of the model every creep of a wave wears in the fog. */
+	Model: `${Paths.Icons}/model-cube.svg`,
+	/** The look of that model: the creep as it is or a ghost of it. */
+	Style: Menu.Icons.PaintRoller,
 	/** The count written on its own, with no card under it. */
 	OnlyText: Menu.Icons.Type,
 	Size: Menu.Icons.Expand,

@@ -1,0 +1,176 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:vpcf51:version{6d03d500-2498-454e-b833-f654e870bb3d} -->
+{
+	_class = "CParticleSystemDefinition"
+	m_bShouldHitboxesFallbackToRenderBounds = false
+	m_flCullRadius = -1.0
+	m_flConstantRadius = 1.0
+	m_nMaxParticles = 1
+	m_nBehaviorVersion = 12
+	m_controlPointConfigurations =
+	[
+		{
+			m_name = "preview"
+			m_drivers =
+			[
+				{
+					m_iControlPoint = 2
+					m_iAttachType = "PATTACH_WORLDORIGIN"
+					m_entityName = "self"
+				},
+			]
+		},
+	]
+	m_PreEmissionOperators =
+	[
+		{
+			_class = "C_OP_StopAfterCPDuration"
+			m_flDuration = 0.1
+			m_bDestroyImmediately = true
+			m_nOpEndCapState = "PARTICLE_ENDCAP_ENDCAP_ON"
+		},
+	]
+	m_Emitters =
+	[
+		{
+			_class = "C_OP_ContinuousEmitter"
+			m_flEmitRate =
+			{
+				m_nType = "PF_TYPE_CONTROL_POINT_COMPONENT"
+				m_nControlPoint = 3
+				m_nVectorComponent = 0
+				m_nMapType = "PF_MAP_TYPE_MULT"
+				m_flMultFactor = 1000.0
+			}
+		},
+	]
+	m_Initializers =
+	[
+		{
+			_class = "C_INIT_CreateWithinSphereTransform"
+			m_TransformInput =
+			{
+				m_nType = "PT_TYPE_CONTROL_POINT"
+				m_nControlPoint = 2
+			}
+		},
+		{
+			_class = "C_INIT_InitFloat"
+			m_InputValue =
+			{
+				m_nType = "PF_TYPE_LITERAL"
+				m_flLiteralValue = -90.0
+			}
+			m_nOutputField = 12
+		},
+	]
+	m_Operators =
+	[
+		{
+			_class = "C_OP_Decay"
+			m_nOpEndCapState = "PARTICLE_ENDCAP_ENDCAP_ON"
+		},
+		{
+			_class = "C_OP_RemapCPtoScalar"
+			m_nCPInput = 3
+			m_nField = -1
+			m_flInputMax = 5.0
+			m_flOutputMax = 5.0
+		},
+		{
+			_class = "C_OP_PositionLock"
+			m_TransformInput =
+			{
+				m_nType = "PT_TYPE_CONTROL_POINT"
+				m_nControlPoint = 2
+			}
+		},
+		{
+			_class = "C_OP_BasicMovement"
+		},
+		{
+			_class = "C_OP_DampenToCP"
+			m_nControlPointNumber = 2
+			m_flRange = 20.0
+		},
+		{
+			_class = "C_OP_SetFloat"
+			m_InputValue =
+			{
+				m_nType = "PF_TYPE_PARTICLE_AGE"
+				m_nMapType = "PF_MAP_TYPE_CURVE"
+				m_Curve =
+				{
+					m_spline =
+					[
+						{
+							x = 0.0
+							y = 0.07272
+							m_flSlopeIncoming = 0.0
+							m_flSlopeOutgoing = 0.12524
+						},
+						{
+							x = 2.0
+							y = 0.3232
+							m_flSlopeIncoming = -0.090129
+							m_flSlopeOutgoing = -0.090129
+						},
+					]
+					m_tangents =
+					[
+						{
+							m_nIncomingTangent = "CURVE_TANGENT_LINEAR"
+							m_nOutgoingTangent = "CURVE_TANGENT_LINEAR"
+						},
+						{
+							m_nIncomingTangent = "CURVE_TANGENT_FREE"
+							m_nOutgoingTangent = "CURVE_TANGENT_MIRROR"
+						},
+					]
+					m_vDomainMins = [ 0.0, 0.0 ]
+					m_vDomainMaxs = [ 2.0, 1.0 ]
+				}
+			}
+			m_nOutputField = 18
+		},
+		{
+			_class = "C_OP_RemapCPtoVector"
+			m_nCPInput = 7
+			m_nFieldOutput = 6
+			m_vInputMin = [ 0.0, 0.0, 0.0 ]
+			m_vInputMax = [ 255.0, 255.0, 255.0 ]
+			m_vOutputMax = [ 1.0, 1.0, 1.0 ]
+		},
+	]
+	m_Renderers =
+	[
+		{
+			_class = "C_OP_RenderModels"
+			m_ModelList =
+			[
+				{ m_model = resource:"models/creeps/lane_creeps/creep_radiant_ranged/radiant_ranged_mega.vmdl" },
+			]
+			m_bAnimated = true
+			m_ActivityName = "ACT_DOTA_RUN"
+			m_bForceLoopingAnimation = true
+			m_bOrientZ = true
+			m_vecLocalRotation =
+			{
+				m_nType = "PVEC_TYPE_CP_RELATIVE_POSITION"
+				m_nControlPoint = 5
+				m_vCPValueScale = [ 1.0, 1.0, 1.0 ]
+				m_vCPRelativeDir = [ 1.0, 0.0, 0.0 ]
+			}
+			m_hOverrideMaterial = resource:"materials/particle/compendium_2023_teleport_image_edge.vmat"
+			m_MaterialVars =
+			[
+				{
+					m_strVariable = "$CLOAK"
+				},
+			]
+			m_bOriginalModel = true
+			m_bDisableShadows = true
+			m_bForceDrawInterlevedWithSiblings = true
+			m_bEnableClothSimulation = true
+		},
+	]
+}

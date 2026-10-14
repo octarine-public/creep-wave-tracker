@@ -47,6 +47,51 @@ class WorldMenu {
 	}
 }
 
+/** A wave in the fog as one 3D creep walking where the guess puts it, its catapults behind it. */
+export class ModelMenu {
+	public readonly Tree: Menu.Node
+	public readonly State: Menu.Toggle
+	/** The creep as it is, or a ghost of it in {@link Color}. */
+	public readonly Style: Menu.Dropdown
+	public readonly Color: Menu.ColorPicker
+
+	constructor(node: Menu.Node) {
+		this.Tree = node.AddNode(
+			"3D model",
+			CreepWaveIcons.Model,
+			"A 3D creep walking in the fog where the wave\nis guessed to be, its catapult behind it"
+		)
+		this.Tree.SortNodes = false
+
+		// the section's own switch rides its header
+		this.State = this.Tree.AddToggle("State", true)
+		this.State.IconPath = CreepWaveIcons.State
+		this.Tree.HeaderControl = this.State
+
+		this.Style = this.Tree.AddDropdown(
+			"Style",
+			["Default", "Ghost"],
+			1,
+			"The creep as it is,\nor a ghost of it that reads as a guess"
+		)
+		this.Style.IconPath = CreepWaveIcons.Style
+
+		this.Color = this.Tree.AddColorPicker("Color", Color.Aqua, "Ghost color")
+		this.Color.IconPath = CreepWaveIcons.Color
+		this.Color.IsHidden = true
+
+		this.Style.OnValue(call => (this.Color.IsHidden = !ModelMenu.isGhost(call)))
+	}
+
+	/** Whether the model is drawn as a ghost rather than as the creep itself. */
+	public get IsGhost(): boolean {
+		return ModelMenu.isGhost(this.Style)
+	}
+	private static isGhost(style: Menu.Dropdown) {
+		return style.SelectedID === 1
+	}
+}
+
 /** The icon a wave leaves on the minimap. */
 class MinimapMenu {
 	public readonly Tree: Menu.Node
@@ -113,6 +158,7 @@ export class MenuManager {
 
 	public readonly State: Menu.Toggle
 	public readonly World: WorldMenu
+	public readonly Model: ModelMenu
 	public readonly Minimap: MinimapMenu
 
 	private readonly node: Menu.Node
@@ -145,6 +191,7 @@ export class MenuManager {
 		this.node.Gate = this.State
 
 		this.World = new WorldMenu(this.node)
+		this.Model = new ModelMenu(this.node)
 		this.Minimap = new MinimapMenu(this.node)
 
 		MenuManager.Menu = this

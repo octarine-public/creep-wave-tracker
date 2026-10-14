@@ -66,13 +66,19 @@ export class CreepGroupModel {
 			creep.Distance(this.FirstCreep) <= reach
 		)
 	}
-	/** The chip in the world and the mark on the minimap, for a wave out of sight in its `slot`. */
+	/**
+	 * The chip in the world and the mark on the minimap, for a wave out of sight in its `slot`. The
+	 * chip rides as high as a creep's bar while the creeps wear models, so it does not hide them.
+	 */
 	public Draw(gui: GUI, menu: MenuManager, slot: number) {
 		if (this.IsVisible) {
 			return
 		}
 		const position = this.Position
 		gui.DrawMinimap(position, this.HasSiege, slot, menu)
+		if (menu.Model.State.value) {
+			position.z += this.FirstCreep.HealthBarOffset
+		}
 		gui.DrawWorld(position, this.Team, this.Glyph, this.Count, slot, menu)
 	}
 }

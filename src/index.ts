@@ -1,5 +1,6 @@
 import "./translations"
 
+import { CreepModels } from "./creep-models"
 import { GUI } from "./gui"
 import { MenuManager } from "./menu"
 import { CreepGroupModel } from "./model"
@@ -16,6 +17,7 @@ const EMPTY_SPOT_GRACE = 0.5
 new (class CCreepWaveTracker {
 	private readonly menu!: MenuManager
 	private readonly gui = new GUI()
+	private readonly models = new CreepModels()
 	/** The SDK's live creep registry, including creeps created before this tracker loaded. */
 	private readonly creeps = EntityManager.GetEntitiesByClass(Creep)
 	/** The waves the creeps stood in on the last update. */
@@ -51,16 +53,19 @@ new (class CCreepWaveTracker {
 	protected EntityDestroyed(entity: Entity) {
 		if (entity instanceof Creep) {
 			this.emptySince.delete(entity)
+			this.models.Remove(entity)
 		}
 	}
 	protected GameEnded() {
 		this.groups.clear()
 		this.emptySince.clear()
+		this.models.Clear()
 	}
 	protected Draw() {
 		if (!this.shouldDraw) {
 			return
 		}
+		this.models.Draw()
 		GUI.BeginFrame()
 		for (let i = this.groups.length - 1; i > -1; i--) {
 			// the mark on the minimap is kept under the wave's place in the list: an icon drawn
@@ -73,9 +78,11 @@ new (class CCreepWaveTracker {
 		if (!this.shouldDraw) {
 			this.groups.clear()
 			this.emptySince.clear()
+			this.models.Clear()
 			return
 		}
 		this.regroup()
+		this.models.Update(this.groups, this.menu.Model)
 	}
 	/**
 	 * Sorts the creeps into waves again: every living creep joins the first wave of its lane it

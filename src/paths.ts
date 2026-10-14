@@ -5,5 +5,6 @@ const files = `${base}/scripts_files`
 export const Paths = {
 	Base: base,
 	Files: files,
-	Icons: `${files}/menu/icons`
+	Icons: `${files}/menu/icons`,
+	Particles: "particles/octarine/creep-wave-tracker"
 } as const

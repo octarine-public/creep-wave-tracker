@@ -8,9 +8,11 @@ const ts = require("typescript")
 function tracker() {
 	const entities = [],
 		draws = [],
+		modeled = [],
 		listeners = new Map()
 	const game = { LocalTeam: 0, UIState: 1, RawGameTime: 0 },
-		state = { value: true }
+		state = { value: true },
+		modelState = { value: false }
 	let probes = 0
 	/** The spots our vision covers, by their x: every other spot is in the fog. */
 	const vision = new Set()
@@ -98,9 +100,25 @@ function tracker() {
 	)
 	const modules = {
 		"./translations": {},
+		"./creep-models": {
+			CreepModels: class {
+				Update(groups) {
+					modeled.splice(0, modeled.length, ...groups.flatMap(x => x.Creeps))
+				}
+				Draw() {}
+				Remove(creep) {
+					const index = modeled.indexOf(creep)
+					if (index !== -1) modeled.splice(index, 1)
+				}
+				Clear() {
+					modeled.length = 0
+				}
+			}
+		},
 		"./menu": {
 			MenuManager: class {
 				State = state
+				Model = { State: modelState }
 			}
 		},
 		"./gui": {
@@ -139,11 +157,14 @@ function tracker() {
 	return {
 		game,
 		state,
+		modelState,
+		draws,
 		vision,
 		get probes() {
 			return probes
 		},
 		entities,
+		modeled,
 		Creep,
 		Siege,
 		Vector3,
@@ -314,6 +335,42 @@ test("destroyed creeps and ended games forget empty spots", () => {
 	t.counts(0.25)
 	t.emit("EntityDestroyed", creep)
 	assert.deepEqual(t.counts(0.25), [1])
+})
+
+test("models are handed the waves of enemy creeps, and come off with the tracker", () => {
+	const t = tracker()
+	t.game.LocalTeam = 2
+	const seen = t.add(3, { IsVisible: true, Position: new t.Vector3(0) }),
+		unseen = t.add(3, { Position: new t.Vector3(100) }),
+		missing = t.add(3, { Position: new t.Vector3(1000) })
+	t.add(2)
+	t.vision.add(1000)
+	t.counts(0.25)
+	assert.deepEqual(new Set(t.modeled), new Set([seen, unseen, missing]))
+	t.counts(0.5)
+	assert.deepEqual(new Set(t.modeled), new Set([seen, unseen]))
+	t.emit("EntityDestroyed", unseen)
+	assert.deepEqual(t.modeled, [seen])
+	t.counts(0.25)
+	assert.deepEqual(new Set(t.modeled), new Set([seen, unseen]))
+	t.state.value = false
+	t.counts(0.25)
+	assert.deepEqual(t.modeled, [])
+	t.state.value = true
+	t.counts(0.25)
+	t.emit("GameEnded")
+	assert.deepEqual(t.modeled, [])
+})
+
+test("the chip rides as high as a creep's bar while the creeps wear models", () => {
+	const t = tracker()
+	t.game.LocalTeam = 2
+	t.add(3, { Position: new t.Vector3(0, 0, 128) })
+	t.counts()
+	assert.equal(t.draws[0].position.z, 128)
+	t.modelState.value = true
+	t.drawCounts()
+	assert.equal(t.draws[0].position.z, 228)
 })
 
 test("a disabled tracker leaves the fog alone and forgets empty spots", () => {
