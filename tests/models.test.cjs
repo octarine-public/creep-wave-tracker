@@ -60,6 +60,13 @@ function models() {
 		}
 	}
 	Creep.prototype.TurnRate = () => 0.5
+	Creep.prototype.TurnYawToward = function (yaw, heading, seconds) {
+		const turn = (30 * this.TurnRate() * seconds * 180) / Math.PI
+		let left = (heading - yaw + 180) % 360
+		if (left < 0) left += 360
+		left -= 180
+		return (yaw + Math.max(-turn, Math.min(turn, left)) + 360) % 360
+	}
 	class Siege extends Creep {}
 	const clock = { now: 0 }
 	const copy = value => (value instanceof Vector3 ? { ...value } : value)
@@ -69,21 +76,33 @@ function models() {
 		Siege,
 		Math,
 		hrtime: () => clock.now,
-		ParticleAttachment: { PATTACH_ABSORIGIN: 1 },
 		Dota2SDK: { LocalPlayer: {}, GetPositionHeight: () => -16384 },
 		FogOfWar: { IsPointVisible: () => false },
 		DotaMap: { GetCreepCurrentTarget: () => ({ Position: new Vector3(0, 1000) }) },
 		ParticlesSDK: class {
 			AllParticles = particles
-			AddOrUpdate(key, path, _attach, _owner, ...points) {
+			DrawModel(key, path, _owner, position, scale, angles, color) {
 				particles.set(key, {
 					Path: path,
-					points: new Map(points.map(([id, value]) => [id, copy(value)]))
+					Position: copy(position),
+					Scale: scale,
+					Angles: copy(angles),
+					Color: color
 				})
 			}
-			SetConstrolPointsByKey(key, ...points) {
-				for (const [id, value] of points)
-					particles.get(key)?.points.set(id, copy(value))
+			SetModelLookByKey(key, scale, color) {
+				const particle = particles.get(key)
+				if (particle !== undefined) {
+					particle.Scale = scale
+					particle.Color = color
+				}
+			}
+			SetModelPlacementByKey(key, position, angles) {
+				const particle = particles.get(key)
+				if (particle !== undefined) {
+					particle.Position = copy(position)
+					particle.Angles = copy(angles)
+				}
 			}
 			DestroyByKey(key) {
 				particles.delete(key)
@@ -148,8 +167,8 @@ test("a wave walks as one creep, a melee one where it has one, with its catapult
 		[...t.particles.keys()].sort((a, b) => a.Index - b.Index),
 		[melee, siege]
 	)
-	const front = t.particles.get(melee).points.get(2),
-		back = t.particles.get(siege).points.get(2)
+	const front = t.particles.get(melee).Position,
+		back = t.particles.get(siege).Position
 	assert.ok(
 		front.y > back.y,
 		"the creep walks ahead of its catapult, toward the corner"
@@ -182,16 +201,16 @@ test("a creep turns toward a new corner as fast as it turns in the game, not at 
 	const melee = new t.Creep(MELEE)
 	const wave = { Creeps: [melee] }
 	t.models.Update([wave], t.menu)
-	assert.equal(t.particles.get(melee).points.get(5).y, 90)
+	assert.equal(t.particles.get(melee).Angles.y, 90)
 	t.corner.Position = new t.Vector3(1000, 0)
 	t.models.Update([wave], t.menu)
 	t.clock.now = 10
 	t.models.Draw()
 	const turn = (30 * 0.5 * 0.01 * 180) / Math.PI
-	assert.ok(Math.abs(t.particles.get(melee).points.get(5).y - (90 - turn)) < 1e-6)
+	assert.ok(Math.abs(t.particles.get(melee).Angles.y - (90 - turn)) < 1e-6)
 	t.clock.now = 1000
 	t.models.Draw()
-	assert.equal(t.particles.get(melee).points.get(5).y, 0)
+	assert.equal(t.particles.get(melee).Angles.y, 0)
 })
 
 test("an update leaves where a standing model is drawn to the frame, so it never steps back", () => {
@@ -201,8 +220,8 @@ test("an update leaves where a standing model is drawn to the frame, so it never
 	t.models.Update([wave], t.menu)
 	melee.Position = new t.Vector3(0, 50)
 	t.models.Draw()
-	assert.equal(t.particles.get(melee).points.get(2).y, 50)
+	assert.equal(t.particles.get(melee).Position.y, 50)
 	melee.Position = new t.Vector3(0, 40)
 	t.models.Update([wave], t.menu)
-	assert.equal(t.particles.get(melee).points.get(2).y, 50)
+	assert.equal(t.particles.get(melee).Position.y, 50)
 })

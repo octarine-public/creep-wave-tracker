@@ -64,11 +64,6 @@ function ByIndex(a: Creep, b: Creep) {
 	return a.Index - b.Index
 }
 
-/** The signed turn from `from` to `to`, in degrees, the short way round. */
-function TurnBetween(from: number, to: number) {
-	return ((((to - from) % 360) + 540) % 360) - 180
-}
-
 /** A creep that wears a model: which one, where it stands drawn and which way it faces. */
 class ShownCreep {
 	/** The update that last asked for the model: one an update did not ask for comes off. */
@@ -137,18 +132,17 @@ export class CreepModels {
 					position = shown.Position,
 					scale = FogOfWar.IsPointVisible(position) ? 0 : creep.ModelScale
 				if (this.particles.AllParticles.get(creep)?.Path === path) {
-					this.particles.SetConstrolPointsByKey(creep, [3, scale], [7, color])
+					this.particles.SetModelLookByKey(creep, scale, color)
 					continue
 				}
-				this.particles.AddOrUpdate(
+				this.particles.DrawModel(
 					creep,
 					path,
-					ParticleAttachment.PATTACH_ABSORIGIN,
 					owner,
-					[2, position],
-					[3, scale],
-					[5, shown.Angles],
-					[7, color]
+					position,
+					scale,
+					shown.Angles,
+					color
 				)
 			}
 		}
@@ -177,10 +171,10 @@ export class CreepModels {
 			this.place(this.formations[i], step)
 			for (let j = creeps.length - 1; j > -1; j--) {
 				const shown = this.shown.get(creeps[j])!
-				this.particles.SetConstrolPointsByKey(
+				this.particles.SetModelPlacementByKey(
 					creeps[j],
-					[2, shown.Position],
-					[5, shown.Angles]
+					shown.Position,
+					shown.Angles
 				)
 			}
 		}
@@ -252,8 +246,7 @@ export class CreepModels {
 		const creeps = formation.Creeps,
 			leader = creeps[0],
 			anchor = leader.Position,
-			target = formation.Target?.Position,
-			turn = Math.radianToDegrees(30 * leader.TurnRate() * step)
+			target = formation.Target?.Position
 		let heading = NaN
 		if (target !== undefined && anchor.Distance2D(target) > 1) {
 			heading = anchor.GetAngleTo(target)
@@ -267,8 +260,7 @@ export class CreepModels {
 				angles.y = Number.isNaN(heading) ? creeps[i].Angles.y : heading
 				shown.IsTurned = true
 			} else if (!Number.isNaN(heading)) {
-				const left = TurnBetween(angles.y, heading)
-				angles.y = (angles.y + Math.max(-turn, Math.min(turn, left)) + 360) % 360
+				angles.y = leader.TurnYawToward(angles.y, heading, step)
 			}
 			if (i === 0) {
 				const yaw = Math.degreesToRadian(angles.y)
