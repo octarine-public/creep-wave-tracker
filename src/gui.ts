@@ -73,7 +73,10 @@ export class GUI {
 
 	/**
 	 * The chip over a wave: the card washed in the faction's colour, the creep's art cut round and
-	 * the count, or the count on its own where the menu asks for that.
+	 * the count, or the count on its own where the menu asks for that. It is drawn in px from the
+	 * whole pixel `anchor` lands on, through a world anchor there: the wave is out of sight, so the
+	 * point is where the script has it, and the core keeps the chip on it as the camera moves.
+	 * `w2s` is handed on as what the projection has past that pixel.
 	 */
 	public DrawWorld(
 		anchor: Vector3,
@@ -91,13 +94,16 @@ export class GUI {
 		}
 		const tint = MenuSDK.HudColors.readable(TeamTint(team)),
 			text = count.toString()
+		w2s.SetVector(w2s.x - Math.round(w2s.x), w2s.y - Math.round(w2s.y))
 		MenuSDK.SetActiveSurface(surface)
 		try {
+			surface.AnchorWorld(anchor.x, anchor.y, anchor.z)
 			if (menu.World.OnlyText.value) {
 				this.countOnly(w2s, text, tint)
 			} else {
 				this.chip(w2s, glyph, text, tint, slot)
 			}
+			surface.Anchor()
 		} finally {
 			MenuSDK.SetActiveSurface(undefined)
 		}
