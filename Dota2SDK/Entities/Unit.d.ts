@@ -40,7 +40,6 @@ declare class Unit extends Entity {
 	public readonly GoldBountyMin: number
 	public readonly GoldBountyMax: number
 	public readonly HealthBarOffsetOverride: number
-	public HealthBarOffset_: Nullable<number>
 	public readonly NetworkActivity: GameActivity
 	public NetworkActivityPrev: GameActivity
 	public NetworkActivityStartTime: number
@@ -57,8 +56,6 @@ declare class Unit extends Entity {
 	public readonly LastDispellTime: number
 	public readonly RefresherChargesUsed: number
 	public readonly TotalAbilityPoints: number
-	/** @private NOTE: this is internal field use LastDamageTime */
-	public LastDamageTime_: number
 	public readonly ScepterUpgradeID: number
 	public readonly ShardUpgradeID: number
 	public Level: number
@@ -71,8 +68,6 @@ declare class Unit extends Entity {
 	public AttackCapabilities: number
 	public UnitStateNetworked: bigint
 	public IsWaitingToSpawn: boolean
-	/** @private NOTE: this is internal field, use Spawner */
-	public Spawner_: number
 	public Spawner: Nullable<NeutralSpawner>
 	public LastActivity: GameActivity
 	public LastActivitySequenceVariant: number
@@ -133,16 +128,10 @@ declare class Unit extends Entity {
 	public HasScepterModifier: boolean
 	public HasShardModifier: boolean
 	public CanBeHealed: boolean
-	/** @private NOTE: this is internal field use Name */
-	public UnitName_: string
 	public PlayerID: number
 	public HPRegenCounter: number
 	public IsControllableByPlayerMask: bigint
-	/** @private NOTE: this is internal field use MyWearables */
-	public MyWearables_: number[]
 	public MyWearables: Wearable[]
-	/** @private NOTE: this is internal field use OwnerNPC */
-	public OwnerNPC_: number
 	/** @description The owner of the Unit. (example: Spirit Bear) */
 	public OwnerNPC: Nullable<Unit>
 	public readonly Buffs: Modifier[]
@@ -150,13 +139,11 @@ declare class Unit extends Entity {
 	public readonly ModifierManager: UnitModifierManager
 	/** Position history, velocity and the ability version of this unit; updated once per tick. */
 	public readonly Prediction: UnitPrediction
-	public readonly Spells_: number[]
 	public readonly Spells: Nullable<Ability>[]
 	public readonly TotalItems_: number[]
 	public readonly TotalItems: Nullable<Item>[]
 	public readonly TPEndPosition: Vector3
 	public readonly TPStartPosition: Vector3
-	protected readonly ReplicatingOtherHeroModel_: number
 	public get Armor(): number
 	public get ArmorType(): ArmorType
 	public get HPRegen(): number
@@ -493,11 +480,9 @@ declare class Unit extends Entity {
 	public get HealthBarPositionCorrection(): Vector2
 	/**
 	 * The projected health bar point ({@link HealthBarOffset} over `origin`, the unit's own position
-	 * by default) on the pixel the game draws the bar at, into `out`: squeezed toward the middle of
-	 * the screen by (width - 1) / width on both axes, then its fraction cut toward the middle. The
-	 * squeeze is auto-lasthit's, which fitted 35 bars measured on screenshots at 1920x1080 (it has
-	 * to lie in 0.99940-0.99964 there); cut unsqueezed, a bar laid on it stood a pixel off the
-	 * game's now and then as the camera moved. Undefined when the point is off the screen.
+	 * by default) on the pixel the game draws the bar at, into `out`: the point as the game projects
+	 * it, its fraction cut toward the middle of the screen. Fits 115 hero bars measured on
+	 * screenshots at 1920x1080. Undefined when the point is off the screen.
 	 * @example
 	 * const anchor = new Vector2()
 	 * if (enemy.HealthBarAnchor(enemy.Position, anchor) !== undefined) {
@@ -530,9 +515,6 @@ declare class Unit extends Entity {
 	 * canvas.Text("illusion", new Vector2(0, -20))
 	 */
 	public get OriginRenderAnchor(): CRenderAnchor
-	/** Releases the unit's render anchors' slots; the SDK calls it when the unit is destroyed. */
-	public ReleaseRenderAnchors_(): void
-	protected OnScreenUnlisted(): boolean
 	/**
 	 * The bar the game draws over a hero, or over a unit a player controls (a bear, a familiar, a
 	 * brewling), standing on `anchor` ({@link HealthBarAnchor}): the frame, the health and mana
@@ -564,15 +546,9 @@ declare class Unit extends Entity {
 	 * {@link GetAttackDamage} returns it for such a target.
 	 */
 	public GetAttackHitDamage(attacker: Unit): Nullable<number>
-	/** The health bar's size of a plain bar, by unit type */
-	protected get UnitHealthBarSize(): Vector2
-	/** {@link HealthBarPositionCorrection} of a plain bar, by unit type */
-	protected get UnitHealthBarPositionCorrection(): Vector2
 	public get HeroFacet(): string
 	public get IsConvertManaCostToHPCost(): boolean
 	public get IsAvoidTotalDamage(): boolean
-	/** Where the unit is heading on its own account: the point of its last move order. */
-	protected get MovementDestination(): Nullable<Vector3>
 	/**
 	 * Game time the unit's hold - the states that keep it where it stands - begins: `now` while the
 	 * game shows one (`UnitPrediction.StateMask`), else the moment the first one a cast of ours

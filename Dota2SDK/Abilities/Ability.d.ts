@@ -30,11 +30,7 @@ declare class Ability extends Entity implements IPredictionProfile {
 	public AbilitySlot: EAbilitySlot
 	/** Profile version of this ability; grows with level, scepter, shard, facet and talents. */
 	public readonly Prediction: AbilityPrediction
-	/** @private NOTE: this is internal field, use IsInAbilityPhase */
-	public IsInAbilityPhase_: boolean
 	public IsInAbilityPhaseChangeTime: number
-	/** @private NOTE: this is internal field, use Owner or Cooldown */
-	public Cooldown_: number
 	public CooldownChangeTime: number
 	/**
 	 * How much the server takes off this cooldown at each of its counts, as the last count it
@@ -42,8 +38,6 @@ declare class Ability extends Entity implements IPredictionProfile {
 	 * once a count reads 0, so a count it showed above 0 holds for a step (`Cooldown`).
 	 */
 	public CooldownStep: number
-	/** @private NOTE: this is internal field, use CooldownRestore */
-	public CooldownRestore_: number
 	public CooldownRestoreTime: number
 	/**
 	 * When the ability last went off, as the game showed it: its cooldown started, it spent a
@@ -58,16 +52,6 @@ declare class Ability extends Entity implements IPredictionProfile {
 	 * const fresh = spell.WentOffAt > GameState.RawGameTime - 1
 	 */
 	public WentOffAt: number
-	/**
-	 * @private NOTE: this is internal field, use CurrentCharges. The charges the ability showed
-	 * last: a drop is a charge spent (`WentOffAt`).
-	 */
-	public ChargesShown_: number
-	/**
-	 * @private NOTE: this is internal field, use IsToggled. Whether the ability showed toggled on
-	 * last: turned on, it went off (`WentOffAt`).
-	 */
-	public ToggledShown_: boolean
 	/**@deprecated */
 	public readonly ProjectilePath: Nullable<string>
 	/**
@@ -346,13 +330,6 @@ declare class Ability extends Entity implements IPredictionProfile {
 	 * const holds = EntityManager.GetConstructorByName<Ability>("invoker_tornado")?.prototype.Immobilizes
 	 */
 	public get Immobilizes(): boolean
-	/**
-	 * Whether a cast with `behavior`, aimed at `teams` and `types`, meets Linken's Sphere and Lotus
-	 * Orb: a cast at a unit, not an attack, at enemy heroes or units - unless the game data marks it
-	 * as one that procs nothing (`DONT_PROC_OTHER_ABILITIES`: Urn of Shadows, Spirit Vessel). A
-	 * class the data does not describe answers here, for both.
-	 */
-	protected MeetsSpellBlock(behavior: DOTA_ABILITY_BEHAVIOR, teams: DOTA_UNIT_TARGET_TEAM, types: DOTA_UNIT_TARGET_TYPE): boolean
 	/** Seconds the cast animation holds the caster after the cast point; zero without animation data. */
 	public get CastBackswing(): number
 	/** Whether a cast `CastPredicted` sent is still before its cast point, where a stop order can take it back. */
@@ -457,11 +434,6 @@ declare class Ability extends Entity implements IPredictionProfile {
 	 */
 	public get PrepareTime(): number
 	public get CanBeUsable(): boolean
-	/**
-	 * Whether the ability can be used by the game time `time` as it stands: as `CanBeUsable`. A
-	 * spell the game hides until it is readied - Invoker's - answers whether it is readied by then.
-	 */
-	protected CanBeUsableAt(_time: number): boolean
 	public get Owner(): Nullable<Unit>
 	public get OwnerHasShard(): boolean
 	public get OwnerHasScepter(): boolean
@@ -677,16 +649,6 @@ declare class Ability extends Entity implements IPredictionProfile {
 	 * (`MaxDuration`). The hold of `HoldingAbility` when another ability of its owner holds for it.
 	 */
 	public get AppliedDuration(): number
-	/**
-	 * The level its durations read at: its own. A class whose values follow another level says
-	 * which - an Invoker spell's, its orb's.
-	 */
-	protected get DurationLevel(): number
-	/**
-	 * The ability of its owner whose effect holds a unit this one hits, when the hold is not its
-	 * own: Enchant Totem's strike stuns by Aftershock. `undefined` by default.
-	 */
-	protected get HoldingAbility(): Nullable<string>
 	public get MaxCooldown(): number
 	public get BaseCastRange(): number
 	public get CastRange(): number
@@ -722,13 +684,6 @@ declare class Ability extends Entity implements IPredictionProfile {
 	 * targets (Partisan's Brand) - or, without one, against any.
 	 */
 	public SpellAmplifyOn(target?: Unit): number
-	protected get CanBeCastedWhileRooted(): boolean
-	/**
-	 * Whether a stun lets it be cast: `DOTA_ABILITY_BEHAVIOR_IGNORE_PSEUDO_QUEUE` in the data -
-	 * Borrowed Time. A hex lets none.
-	 */
-	protected get CanBeCastedWhileStunned(): boolean
-	protected get CanBeCastedWhileSilenced(): boolean
 	public GetProjectileStartingPosition(pos: Vector3, ang: QAngle, scale?: number): Vector3
 	public GetMaxCooldownForLevel(level: number): number
 	public GetChargeRestoreTimeForLevel(level: number): number
@@ -757,43 +712,6 @@ declare class Ability extends Entity implements IPredictionProfile {
 	 * const stun = data === undefined ? 0 : (impale?.prototype.AppliedDurationOf(data) ?? 0)
 	 */
 	public AppliedDurationOf(data: AbilityData): number
-	/**
-	 * How long its effect lasts at `level`, its special values read from `values` - the ability as
-	 * it stands, or its data at its best (`MaxDurationOf`): the class's formula, one for both.
-	 */
-	protected DurationFrom(values: ISpecialValues, level: number): number
-	/**
-	 * How long its effect holds a unit it hits at `level`, its special values read from `values`:
-	 * how long the effect lasts (`DurationFrom`) by default. A class whose effect is not the hold -
-	 * an area that stands, a stun after a lift - says how long it holds.
-	 */
-	protected AppliedFrom(values: ISpecialValues, level: number): number
-	/**
-	 * Names the effects of a hit into `out`: one by default, the unit states the ability applies
-	 * (`AppliesUnitState`) for as long as it holds a unit (`AppliedDuration`). A class whose hit
-	 * brings several of lengths of their own - a push and a disarm - names each.
-	 */
-	protected FillEffects(out: AbilityEffects): void
-	/**
-	 * Names the effects of a hit on `target` into `out`: by default the unit states the ability
-	 * applies for as long as it holds that unit (`GetAppliedDuration`) - a class whose hold depends
-	 * on the target says so there. A class naming effects of its own (`FillEffects`) names them for
-	 * a target too.
-	 */
-	protected FillEffectsOn(out: AbilityEffects, target: Unit): void
-	/**
-	 * Names the changes of move speed a hit on `target` brings into `out`
-	 * (`AbilityEffects.AddSpeedChange`), each for as long as it lasts on that unit: none by
-	 * default; a class whose hit slows or quickens the unit names it, its percent and its seconds
-	 * from its own data - Ethereal Blade's slow on an enemy. What a projectile of it in flight
-	 * brings its target before it lands (`UnitPrediction.IncomingSpeed`).
-	 */
-	protected FillSpeedChangesOn(_out: AbilityEffects, _target: Unit): void
-	/**
-	 * `duration` seconds of a hold on `target`, cut by its status resistance and drawn out by the
-	 * owner's debuff amplification where the game applies them (`Unit.GetDebuffDurationFactor`).
-	 */
-	protected HoldOn(target: Unit, duration: number): number
 	public GetBaseCastPointForLevel(level: number): number
 	public GetBaseDamageForLevel(level: number): number
 	public GetBaseManaCostForLevel(level: number): number
@@ -867,13 +785,6 @@ declare class Ability extends Entity implements IPredictionProfile {
 	 * const push = staff.MotionAlong(hero, hero.Position, new Vector3(1, 0, 0), landsAt)
 	 */
 	public MotionAlong(_target: Unit, _from: Vector3, _way: Vector3, _landsAt: number): Nullable<Motion>
-	/**
-	 * Its owner's rush from `from` toward `toward` at `Speed`, starting at `landsAt`: as far as its
-	 * cast range that way at most and `least` at least - Time Walk, Waveform, Skewer; landed at
-	 * once for a speed past any travel - Astral Step. None for another unit than its owner, or with
-	 * no speed.
-	 */
-	protected RushOf(target: Unit, from: Vector3, toward: Vector3, landsAt: number, least?: number): Nullable<Motion>
 	/**
 	 * How a cast at `target` issued now plays out, stretch by stretch; see `CastTimeline`. The
 	 * approach walks the grid to the nearest point in cast range of where a unit target will be
@@ -1165,11 +1076,6 @@ declare class Ability extends Entity implements IPredictionProfile {
 	 * default - Icarus Dive's arc gets to a unit on its way.
 	 */
 	public ReachesAfter(_target: Unit): number
-	/**
-	 * Fills `out` with the second rule of the ticks a cast of it lays at `level`, beside the first
-	 * (`DamageTicks.Beside`): none by default - Firestorm's burn beside its waves.
-	 */
-	protected BesideOverTime(_out: DamageTicks, _level: number): boolean
 	public UseAbility(target?: Vector3 | Entity, checkAutoCast?: boolean, checkToggled?: boolean, queue?: boolean, showEffects?: boolean): Nullable<ExecuteOrder>
 	public UpgradeAbility(): ExecuteOrder | undefined
 	public PingAbility(): ExecuteOrder | undefined
@@ -1234,27 +1140,6 @@ declare class Ability extends Entity implements IPredictionProfile {
 	 * 	ethereal.GetDamage(enemy) + dagon.GetDamage(enemy) * ethereal.AmplificationOf(dagon, enemy)
 	 */
 	public AmplificationOf(_ability: Ability, _target: Unit): number
-	/**
-	 * The factor the magical damage at `target` grows by once an ethereal form cutting its magic
-	 * resistance by `bonus` percent - negative, `MAGICAL_RESISTANCE_DECREPIFY_UNIQUE`, only the
-	 * strongest such cut on a unit counting - lands on it, over the strongest on it now: Ethereal
-	 * Blade's blast, Decrepify, Spectral Slug. 1 for an ally of the owner or a unit spell immune.
-	 */
-	protected EtherealAmplification(target: Unit, bonus: number): number
-	/**
-	 * The factor the magical damage at `target` grows by once a debuff cutting its magic resistance
-	 * by `cut` percent - negative, `MAGICAL_RESISTANCE_BONUS`, each such debuff multiplying what the
-	 * resistance leaves - lands on it: Ancient Seal, Ice Vortex. 1 for an ally of the owner, a unit
-	 * spell immune, or one wearing `modifier` already - the debuff renews, it does not stack.
-	 */
-	protected ResistCutAmplification(target: Unit, cut: number, modifier: string): number
-	/**
-	 * The factor the damage of `ability` at `target` grows by once a debuff adding `percent` to the
-	 * damage the target takes (`INCOMING_DAMAGE_PERCENTAGE`, the debuffs on a unit summed) lands on
-	 * it: Track, Veil of Discord, Hunter's Mark. 1 for an ally of the owner, a unit spell immune, or
-	 * one wearing `modifier` already - the debuff renews, it does not stack.
-	 */
-	protected IncomingAmplification(ability: Ability, target: Unit, percent: number, modifier: string): number
 	/**
 	 * What its cast takes from its own caster while what it lays on it lasts (`MaxDuration`):
 	 * Mask of Madness's Berserk silences its bearer - its spells, not its items. None for most.
@@ -1334,11 +1219,6 @@ declare class Ability extends Entity implements IPredictionProfile {
 	 * }
 	 */
 	public SharesEffectWith(other: Ability): boolean
-	/**
-	 * Whether it is an upgrade of `other` that carries its effect on in its place, the two not
-	 * stacking on one unit. None for most.
-	 */
-	protected CarriesOn(_other: Ability): boolean
 	public IsNuke(): this is INuke
 	public IsBuff(): this is IBuff
 	public IsShield(): this is IShield
@@ -1378,8 +1258,4 @@ declare class Ability extends Entity implements IPredictionProfile {
 	public IsHealthRestore(): this is IHealthRestore<Unit>
 	public GetHealthCost(baseManaCost: number): number
 	public GetManaCostModifier(baseManaCost: number): number
-	protected GetCastPointModifier(baseCastPoint: number): number
-	protected GetManaCostModifierSpellSteal(owner: Unit): number
-	protected GetSpellAmpModifierSpellSteal(owner?: Nullable<Unit>, target?: Unit): number
-	protected IsAbsoluteNoDamage(source: Unit, target: Unit, damageType: DAMAGE_TYPES): boolean
 }
