@@ -128,7 +128,7 @@ new (class CCreepWaveTracker {
 		if (since !== undefined && now - since >= EMPTY_SPOT_GRACE) {
 			return true
 		}
-		if (!FogOfWar.IsPointVisible(creep.Position)) {
+		if (!VisionSDK.IsPointVisible(creep.Position)) {
 			this.emptySince.delete(creep)
 			return false
 		}

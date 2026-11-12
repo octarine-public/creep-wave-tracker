@@ -130,7 +130,7 @@ export class CreepModels {
 					shown = this.shown.get(creep)!,
 					path = paths[shown.Model],
 					position = shown.Position,
-					scale = FogOfWar.IsPointVisible(position) ? 0 : creep.ModelScale
+					scale = VisionSDK.IsPointVisible(position) ? 0 : creep.ModelScale
 				if (this.particles.AllParticles.get(creep)?.Path === path) {
 					this.particles.SetModelLookByKey(creep, scale, color)
 					continue
